@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{admin/layout :: shell(
+    'Quản lý Merchant',
+    'merchants',
+    ~{::content}
+)}">
+    <section th:fragment="content">
+
+        <div class="mb-4">
+            <h2 class="fw-bold mb-1">Quản lý Merchant</h2>
+            <p class="text-muted mb-0">
+                Quản lý duyệt đăng ký, đối tác và trạng thái hoạt động của các merchant.
+            </p>
+        </div>
+
+        <div th:if="${message}"
+             class="alert alert-success alert-dismissible fade show shadow-sm"
+             role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${message}"></span>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}"
+             class="alert alert-danger alert-dismissible fade show shadow-sm"
+             role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4 rounded-4">
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/admin/merchants}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == null} ? 'btn-dark' : 'btn-outline-dark'">
+                        Tất cả
+                    </a>
+
+                    <a th:href="@{/admin/merchants(status='PENDING')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING} ? 'btn-warning' : 'btn-outline-warning'">
+                        Chờ duyệt
+                    </a>
+
+                    <a th:href="@{/admin/merchants(status='APPROVED')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED} ? 'btn-success' : 'btn-outline-success'">
+                        Đã duyệt
+                    </a>
+
+                    <a th:href="@{/admin/merchants(status='REJECTED')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED} ? 'btn-danger' : 'btn-outline-danger'">
+                        Từ chối
+                    </a>
+
+                    <a th:href="@{/admin/merchants(status='BLOCKED')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED} ? 'btn-secondary' : 'btn-outline-secondary'">
+                        Đã khóa
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">STT</th>
+                            <th>Nhà hàng</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Địa chỉ</th>
+                            <th>Giờ mở - đóng cửa</th>
+                            <th>Trạng thái</th>
+                            <th>Đối tác thân thiết</th>
+                            <th class="text-center pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        <tr th:each="merchant, stat : ${merchants}">
+                            <td class="ps-4" th:text="${stat.count}"></td>
+
+                            <td>
+                                <span class="fw-semibold text-dark"
+                                      th:text="${merchant.merchantRestaurantName}">
+                                </span>
+                            </td>
+
+                            <td th:text="${merchant.merchantEmail}"></td>
+
+                            <td th:text="${merchant.merchantPhone}"></td>
+
+                            <td>
+                                <div th:if="${merchant.addresses != null && !merchant.addresses.isEmpty()}"
+                                     class="d-flex align-items-start gap-2"
+                                     style="max-width: 220px;">
+                                    <i class="bi bi-geo-alt-fill text-danger mt-1 flex-shrink-0"></i>
+
+                                    <span class="small text-dark"
+                                          th:title="${merchant.addresses[0].merchantAddress}"
+                                          th:text="${#strings.length(merchant.addresses[0].merchantAddress) > 30 ? #strings.substring(merchant.addresses[0].merchantAddress, 0, 30) + '...' : merchant.addresses[0].merchantAddress}">
+                                    </span>
+                                </div>
+
+                                <span th:unless="${merchant.addresses != null && !merchant.addresses.isEmpty()}"
+                                      class="text-muted small">
+                                    Chưa có
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <div th:if="${merchant.addresses != null
+                                    && !merchant.addresses.isEmpty()
+                                    && merchant.addresses[0].merchantOpenTime != null
+                                    && merchant.addresses[0].merchantCloseTime != null}"
+                                     class="d-inline-flex flex-column align-items-center">
+
+                                    <span class="small fw-semibold text-dark">
+                                        <i class="bi bi-clock text-danger me-1"></i>
+
+                                        <span th:text="${#temporals.format(
+                                            merchant.addresses[0].merchantOpenTime,
+                                            'HH:mm'
+                                        )}">
+                                            08:00
+                                        </span>
+                                    </span>
+
+                                    <span class="small text-muted">
+                                        -
+                                        <span th:text="${#temporals.format(
+                                            merchant.addresses[0].merchantCloseTime,
+                                            'HH:mm'
+                                        )}">
+                                            22:00
+                                        </span>
+                                    </span>
+                                </div>
+
+                                <span th:unless="${merchant.addresses != null
+                                    && !merchant.addresses.isEmpty()
+                                    && merchant.addresses[0].merchantOpenTime != null
+                                    && merchant.addresses[0].merchantCloseTime != null}"
+                                      class="text-muted small">
+                                    Chưa cập nhật
+                                </span>
+                            </td>
+
+                            <td>
+                                <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                                      class="badge bg-warning text-dark">
+                                    Chờ duyệt
+                                </span>
+
+                                <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+                                      class="badge bg-success">
+                                    Đã duyệt
+                                </span>
+
+                                <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
+                                      class="badge bg-danger">
+                                    Từ chối
+                                </span>
+
+                                <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+                                      class="badge bg-secondary">
+                                    Đã khóa
+                                </span>
+                            </td>
+
+                            <td>
+                                <span th:if="${merchant.trustedPartner}"
+                                      class="badge bg-primary">
+                                    <i class="bi bi-patch-check-fill me-1"></i>
+                                    Đối tác thân thiết
+                                </span>
+
+                                <span th:unless="${merchant.trustedPartner}"
+                                      class="text-muted small">
+                                    Không
+                                </span>
+
+                                <span th:if="${pendingTrustedPartnerIds.contains(merchant.id)}"
+                                      class="badge bg-warning text-dark mt-1">
+                                    <i class="bi bi-hourglass-split me-1"></i>
+                                    Đang chờ duyệt
+                                </span>
+                            </td>
+
+                            <td class="pe-4">
+                                <div class="d-flex justify-content-center gap-1 flex-wrap">
+
+                                    <a th:href="@{/admin/merchants/{id}(id=${merchant.id})}"
+                                       class="btn btn-sm btn-outline-dark"
+                                       title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+
+                                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                                          th:action="@{/admin/merchants/{id}/approve(id=${merchant.id})}"
+                                          method="post">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-success">
+                                            <i class="bi bi-check-lg me-1"></i>
+                                            Duyệt
+                                        </button>
+                                    </form>
+
+                                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                                            type="button"
+                                            class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="'#rejectModal-' + ${merchant.id}">
+                                        <i class="bi bi-x-lg me-1"></i>
+                                        Từ chối
+                                    </button>
+
+                                    <div th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                                         class="modal fade"
+                                         th:id="'rejectModal-' + ${merchant.id}"
+                                         tabindex="-1"
+                                         aria-hidden="true">
+
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow">
+
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">
+                                                        Từ chối Merchant
+                                                    </h5>
+
+                                                    <button type="button"
+                                                            class="btn-close btn-close-white"
+                                                            data-bs-dismiss="modal">
+                                                    </button>
+                                                </div>
+
+                                                <form th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}"
+                                                      method="post">
+
+                                                    <div class="modal-body p-4 text-start">
+                                                        <p class="mb-2">
+                                                            Nhập lý do từ chối đăng ký của
+                                                            <strong th:text="${merchant.merchantRestaurantName}">
+                                                            </strong>:
+                                                        </p>
+
+                                                        <textarea name="reason"
+                                                                  class="form-control rounded-3"
+                                                                  rows="4"
+                                                                  maxlength="500"
+                                                                  placeholder="Ví dụ: Thông tin liên hệ không chính xác, thiếu giấy tờ..."
+                                                                  required></textarea>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button type="button"
+                                                                class="btn btn-secondary rounded-pill px-3"
+                                                                data-bs-dismiss="modal">
+                                                            Hủy
+                                                        </button>
+
+                                                        <button type="submit"
+                                                                class="btn btn-danger rounded-pill px-3">
+                                                            Xác nhận từ chối
+                                                        </button>
+                                                    </div>
+
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#lockMerchantModal"
+                                            th:data-merchant-name="${merchant.merchantRestaurantName}"
+                                            th:data-action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}">
+                                        <i class="bi bi-lock"></i>
+                                        Khóa
+                                    </button>
+
+                                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-success"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#unlockMerchantModal"
+                                            th:data-merchant-name="${merchant.merchantRestaurantName}"
+                                            th:data-action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}">
+                                        <i class="bi bi-unlock"></i>
+                                        Mở khóa
+                                    </button>
+
+                                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED
+                                        && !merchant.trustedPartner
+                                        && pendingTrustedPartnerIds.contains(merchant.id)}"
+                                          th:action="@{/admin/merchants/{id}/trusted-partner(id=${merchant.id})}"
+                                          method="post">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-primary">
+                                            <i class="bi bi-patch-check me-1"></i>
+                                            Duyệt đối tác
+                                        </button>
+                                    </form>
+
+                                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED
+                                        && !merchant.trustedPartner
+                                        && pendingTrustedPartnerIds.contains(merchant.id)}"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            th:data-bs-target="'#rejectTrustedPartnerModal-' + ${merchant.id}">
+                                        <i class="bi bi-x-lg me-1"></i>
+                                        Từ chối
+                                    </button>
+
+                                    <div th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED
+                                        && !merchant.trustedPartner
+                                        && pendingTrustedPartnerIds.contains(merchant.id)}"
+                                         class="modal fade"
+                                         th:id="'rejectTrustedPartnerModal-' + ${merchant.id}"
+                                         tabindex="-1"
+                                         aria-hidden="true">
+
+                                        <div class="modal-dialog modal-dialog-centered">
+
+                                            <div class="modal-content border-0 shadow">
+
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="bi bi-x-circle me-2"></i>
+                                                        Từ chối đối tác thân thiết
+                                                    </h5>
+
+                                                    <button type="button"
+                                                            class="btn-close btn-close-white"
+                                                            data-bs-dismiss="modal">
+                                                    </button>
+                                                </div>
+
+                                                <form th:action="@{/admin/merchants/{id}/trusted-partner/reject(id=${merchant.id})}"
+                                                      method="post">
+
+                                                    <div class="modal-body p-4 text-start">
+                                                        <p class="mb-2">
+                                                            Nhập lý do từ chối đăng ký đối tác thân thiết của
+                                                            <strong th:text="${merchant.merchantRestaurantName}">
+                                                            </strong>:
+                                                        </p>
+
+                                                        <textarea name="reason"
+                                                                  class="form-control rounded-3"
+                                                                  rows="4"
+                                                                  maxlength="500"
+                                                                  placeholder="Nhập lý do từ chối..."
+                                                                  required></textarea>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button type="button"
+                                                                class="btn btn-secondary rounded-pill px-3"
+                                                                data-bs-dismiss="modal">
+                                                            Hủy
+                                                        </button>
+
+                                                        <button type="submit"
+                                                                class="btn btn-danger rounded-pill px-3">
+                                                            <i class="bi bi-x-lg me-1"></i>
+                                                            Xác nhận từ chối
+                                                        </button>
+                                                    </div>
+
+                                                </form>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED
+                                        && merchant.trustedPartner}"
+                                          th:action="@{/admin/merchants/{id}/trusted-partner/remove(id=${merchant.id})}"
+                                          method="post">
+
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-star me-1"></i>
+                                            Bỏ đối tác
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(merchants)}">
+                            <td colspan="9"
+                                class="text-center text-muted py-5">
+                                <i class="bi bi-shop fs-1 d-block mb-2 text-secondary"></i>
+                                Không có merchant nào trong danh sách.
+                            </td>
+                        </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade"
+             id="lockMerchantModal"
+             tabindex="-1"
+             aria-labelledby="lockMerchantModalLabel"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content border-0 shadow">
+
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"
+                            id="lockMerchantModalLabel">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Xác nhận khóa Merchant
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+                    </div>
+
+                    <form id="lockMerchantForm"
+                          method="post">
+
+                        <div class="modal-body p-4 text-start">
+
+                            <p class="mb-2">
+                                Bạn có chắc chắn muốn khóa Merchant:
+                            </p>
+
+                            <h5 id="lockMerchantName"
+                                class="fw-bold text-danger mb-4">
+                            </h5>
+
+                            <div class="mb-3">
+
+                                <label for="lockReason"
+                                       class="form-label fw-semibold">
+                                    Lý do khóa
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <textarea id="lockReason"
+                                          name="lockReason"
+                                          class="form-control rounded-3"
+                                          rows="4"
+                                          maxlength="500"
+                                          required
+                                          placeholder="Nhập lý do khóa Merchant..."></textarea>
+
+                                <div class="form-text">
+                                    Lý do khóa là bắt buộc và tối đa 500 ký tự.
+                                </div>
+
+                            </div>
+
+                            <div class="alert alert-warning mb-0 rounded-3">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <strong>Cảnh báo:</strong>
+                                Merchant sẽ bị khóa và không thể tiếp tục thực hiện các chức năng bán hàng.
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="button"
+                                    class="btn btn-secondary rounded-pill px-3"
+                                    data-bs-dismiss="modal">
+                                Hủy
+                            </button>
+
+                            <button type="submit"
+                                    class="btn btn-danger rounded-pill px-3">
+                                <i class="bi bi-lock me-1"></i>
+                                Xác nhận khóa
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade"
+             id="unlockMerchantModal"
+             tabindex="-1"
+             aria-labelledby="unlockMerchantModalLabel"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content border-0 shadow">
+
+                    <div class="modal-header bg-success text-white">
+
+                        <h5 class="modal-title"
+                            id="unlockMerchantModalLabel">
+                            <i class="bi bi-unlock me-2"></i>
+                            Xác nhận mở khóa Merchant
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close btn-close-white"
+                                data-bs-dismiss="modal"
+                                aria-label="Close">
+                        </button>
+
+                    </div>
+
+                    <form id="unlockMerchantForm"
+                          method="post">
+
+                        <div class="modal-body p-4 text-start">
+
+                            <p class="mb-2">
+                                Bạn có chắc chắn muốn mở khóa Merchant:
+                            </p>
+
+                            <h5 id="unlockMerchantName"
+                                class="fw-bold text-success mb-3">
+                            </h5>
+
+                            <div class="alert alert-info mt-3 mb-0 rounded-3">
+
+                                <i class="bi bi-info-circle me-1"></i>
+
+                                Sau khi mở khóa, Merchant có thể tiếp tục sử dụng các chức năng bán hàng.
+
+                            </div>
+
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <button type="button"
+                                    class="btn btn-secondary rounded-pill px-3"
+                                    data-bs-dismiss="modal">
+                                Hủy
+                            </button>
+
+                            <button type="submit"
+                                    class="btn btn-success rounded-pill px-3">
+
+                                <i class="bi bi-unlock me-1"></i>
+                                Xác nhận mở khóa
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+
+                const lockModal =
+                    document.getElementById('lockMerchantModal');
+
+                if (lockModal) {
+                    lockModal.addEventListener(
+                        'show.bs.modal',
+                        function (event) {
+
+                            const button = event.relatedTarget;
+
+                            const merchantName =
+                                button.getAttribute('data-merchant-name');
+
+                            const action =
+                                button.getAttribute('data-action');
+
+                            document.getElementById(
+                                'lockMerchantName'
+                            ).textContent = merchantName;
+
+                            document.getElementById(
+                                'lockMerchantForm'
+                            ).action = action;
+
+                            document.getElementById(
+                                'lockReason'
+                            ).value = '';
+                        }
+                    );
+                }
+
+                const unlockModal =
+                    document.getElementById('unlockMerchantModal');
+
+                if (unlockModal) {
+                    unlockModal.addEventListener(
+                        'show.bs.modal',
+                        function (event) {
+
+                            const button = event.relatedTarget;
+
+                            const merchantName =
+                                button.getAttribute('data-merchant-name');
+
+                            const action =
+                                button.getAttribute('data-action');
+
+                            document.getElementById(
+                                'unlockMerchantName'
+                            ).textContent = merchantName;
+
+                            document.getElementById(
+                                'unlockMerchantForm'
+                            ).action = action;
+                        }
+                    );
+                }
+            });
+        </script>
+
+    </section>
+</div>
+
+</body>
+</html>

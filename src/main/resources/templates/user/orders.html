@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đơn hàng của tôi - MealChoice</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .order-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease;
+        }
+        .order-card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+            border-color: #cbd5e1;
+        }
+        .food-item-thumb {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .order-detail-thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+        .filter-pill {
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+        }
+        .cancel-reason-chip {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<div class="container py-4 my-2">
+
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+            <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Đơn hàng của tôi</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">
+                <i class="bi bi-clock-history text-danger me-2"></i>Đơn hàng của tôi
+            </h3>
+            <p class="text-muted mb-0 small">Theo dõi tình trạng các đơn đặt món gần đây của bạn.</p>
+        </div>
+        <a href="/" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i>Đặt thêm món
+        </a>
+    </div>
+
+    <!-- BỘ LỌC TRẠNG THÁI -->
+    <div class="d-flex gap-2 overflow-x-auto pb-3 mb-3" style="max-width: 860px;">
+        <a th:href="@{/user/orders}"
+           class="btn filter-pill"
+           th:classappend="${selectedStatus == null} ? 'btn-danger text-white' : 'btn-outline-secondary'">
+            Tất cả
+        </a>
+        <a th:each="st : ${T(vn.codegyme.meal_choice.entity.OrderStatus).values()}"
+           th:href="@{/user/orders(status=${st.name()})}"
+           class="btn filter-pill"
+           th:classappend="${selectedStatus != null and selectedStatus.name() == st.name()} ? 'btn-danger text-white' : 'btn-outline-secondary'"
+           th:text="${st.displayName}">
+            Trạng thái
+        </a>
+    </div>
+
+    <!-- DANH SÁCH ĐƠN HÀNG -->
+    <div class="d-flex flex-column gap-3" style="max-width: 860px;">
+
+        <!-- Chưa có đơn nào -->
+        <div th:if="${#lists.isEmpty(orders)}" class="bg-white rounded-4 p-5 text-center border">
+            <i class="bi bi-receipt fs-1 text-secondary opacity-50 d-block mb-3"></i>
+            <h5 class="fw-bold text-dark">Chưa có đơn hàng nào ở đây</h5>
+            <p class="text-muted mb-4 small">Chọn một quán gần bạn và đặt món đầu tiên.</p>
+            <a href="/" class="btn btn-danger rounded-pill px-4 py-2 fw-bold"
+               style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;">
+                Xem thực đơn
+            </a>
+        </div>
+
+        <!-- Lặp danh sách đơn hàng -->
+        <div th:each="order : ${orders}" class="order-card p-4" th:attr="data-order-id=${order.id}">
+
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 pb-3 mb-3 border-bottom">
+                <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="fw-bold text-dark fs-6" th:text="${order.merchantName}">Quán Ngon Hà Nội</span>
+                        <span class="text-muted">|</span>
+                        <span class="text-muted font-monospace small" th:text="${order.orderCode}">MC-123456</span>
+                    </div>
+                    <small class="text-muted" th:text="'Đặt lúc ' + ${order.formattedCreatedAt}">12:30 21/08/2026</small>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill px-3 py-1.5 fw-semibold font-size-13"
+                          th:classappend="${order.statusBadgeClass}"
+                          th:text="${order.statusDisplayName}">
+                        Chờ nhận hàng
+                    </span>
+                </div>
+            </div>
+
+            <!-- Danh sách món -->
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div th:each="item : ${order.items}" class="d-flex align-items-center justify-content-between font-size-14">
+                    <div class="d-flex align-items-center gap-2.5">
+                        <img th:if="${item.foodImage != null and !item.foodImage.isBlank()}"
+                             th:src="${item.foodImage}" class="food-item-thumb" alt="Ảnh món ăn">
+                        <div th:unless="${item.foodImage != null and !item.foodImage.isBlank()}"
+                             class="food-item-thumb bg-light border d-flex align-items-center justify-content-center text-muted">
+                            <i class="bi bi-image"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold text-dark" th:text="${item.foodName}">Phở Bò Tái Nạm</div>
+                            <small class="text-muted" th:text="'Số lượng: x' + ${item.quantity}">x1</small>
+                        </div>
+                    </div>
+                    <strong class="text-dark" th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">50.000 đ</strong>
+                </div>
+            </div>
+
+            <!-- Lý do hủy nếu có -->
+            <div th:if="${order.cancelReason != null and !order.cancelReason.isBlank()}"
+                 class="alert alert-danger bg-danger-subtle border-0 rounded-3 py-2 px-3 font-size-13 mb-3">
+                <i class="bi bi-x-circle me-1"></i>
+                <span th:text="${order.cancelReason}">Lý do hủy</span>
+            </div>
+
+            <!-- Tổng tiền & hành động -->
+            <div class="d-flex justify-content-between align-items-end pt-3 border-top flex-wrap gap-3">
+                <div class="text-muted small">
+                    <div class="mb-1">
+                        <i class="bi bi-geo-alt me-1 text-danger"></i>
+                        <span th:text="${order.deliveryAddress}">Địa chỉ giao hàng</span>
+                    </div>
+                    <div th:if="${order.deliveryPartnerName != null}" class="text-secondary font-size-12">
+                        <i class="bi bi-truck me-1 text-primary"></i>
+                        <span th:text="${order.deliveryPartnerName}">Giao hàng tiêu chuẩn</span>
+                    </div>
+                </div>
+
+                <div class="text-end">
+                    <small class="text-muted d-block font-size-12">Tổng thanh toán</small>
+                    <span class="fw-extrabold text-danger fs-5"
+                          th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                        115.000 đ
+                    </span>
+
+                    <div class="d-flex gap-2 mt-2 justify-content-end">
+                        <button type="button"
+                                class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold"
+                                th:attr="data-view-order=${order.id}">
+                            <i class="bi bi-receipt-cutoff me-1"></i>Xem chi tiết
+                        </button>
+
+                        <button type="button"
+                                th:if="${order.canCancelByUser}"
+                                class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
+                                th:attr="data-cancel-order=${order.id},data-order-code=${order.orderCode}">
+                            <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phân trang -->
+        <nav th:if="${orderPage != null and orderPage.totalPages > 1}" class="d-flex justify-content-center mt-4">
+            <ul class="pagination pagination-sm shadow-sm rounded-pill overflow-hidden">
+                <li class="page-item" th:classappend="${orderPage.first} ? 'disabled'">
+                    <a class="page-link px-3"
+                       th:href="@{/user/orders(page=${orderPage.number - 1}, status=${selectedStatus != null ? selectedStatus.name() : null})}">
+                        <i class="bi bi-chevron-left me-1"></i>Trước
+                    </a>
+                </li>
+                <li th:each="i : ${#numbers.sequence(0, orderPage.totalPages - 1)}"
+                    class="page-item"
+                    th:classappend="${i == orderPage.number} ? 'active'">
+                    <a class="page-link px-3"
+                       th:href="@{/user/orders(page=${i}, status=${selectedStatus != null ? selectedStatus.name() : null})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+                <li class="page-item" th:classappend="${orderPage.last} ? 'disabled'">
+                    <a class="page-link px-3"
+                       th:href="@{/user/orders(page=${orderPage.number + 1}, status=${selectedStatus != null ? selectedStatus.name() : null})}">
+                        Sau<i class="bi bi-chevron-right ms-1"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+    </div>
+
+</div>
+
+<!-- ==================== MODAL CHI TIẾT ĐƠN HÀNG ==================== -->
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow">
+
+            <div class="modal-header border-bottom">
+                <div>
+                    <h5 class="modal-title fw-bold text-dark mb-0">Chi tiết đơn hàng</h5>
+                    <small class="text-muted font-monospace" id="detailOrderCode">—</small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body py-3">
+
+                <!-- Trạng thái tải -->
+                <div id="detailLoading" class="text-center py-5 text-muted">
+                    <span class="spinner-border spinner-border-sm text-danger me-2"></span>
+                    Đang tải chi tiết đơn hàng...
+                </div>
+
+                <!-- Lỗi -->
+                <div id="detailError" class="alert alert-danger d-none" role="alert"></div>
+
+                <!-- Nội dung -->
+                <div id="detailContent" class="d-none">
+
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <span class="badge rounded-pill px-3 py-2 fw-semibold" id="detailStatusBadge">—</span>
+                        <small class="text-muted" id="detailCreatedAt">—</small>
+                    </div>
+
+                    <div id="detailCancelBox" class="alert alert-danger bg-danger-subtle border-0 rounded-3 py-2 px-3 font-size-13 d-none">
+                        <i class="bi bi-x-circle me-1"></i><span id="detailCancelReason"></span>
+                    </div>
+
+                    <!-- Cửa hàng -->
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="fw-bold text-dark mb-2">
+                            <i class="bi bi-shop text-danger me-1"></i><span id="detailMerchantName">Cửa hàng</span>
+                        </div>
+                        <div class="text-muted font-size-13" id="detailMerchantAddress"></div>
+                        <div class="text-muted font-size-13" id="detailMerchantPhone"></div>
+                    </div>
+
+                    <!-- Giao hàng -->
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="fw-bold text-dark mb-2">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>Giao đến
+                        </div>
+                        <div class="text-dark font-size-14" id="detailContact"></div>
+                        <div class="text-muted font-size-13" id="detailAddress"></div>
+                        <div class="text-muted font-size-13 mt-1" id="detailDeliveryPartner"></div>
+                        <div class="text-muted font-size-13" id="detailEta"></div>
+                        <div class="text-muted font-size-12 fst-italic mt-1 d-none" id="detailNoteRow">
+                            <i class="bi bi-chat-left-text me-1"></i><span id="detailNote"></span>
+                        </div>
+                    </div>
+
+                    <!-- Món ăn -->
+                    <div class="fw-bold text-dark mb-2">Món đã đặt</div>
+                    <div id="detailItems" class="d-flex flex-column gap-2 mb-3"></div>
+
+                    <!-- Chi phí -->
+                    <div class="border-top pt-3 d-flex flex-column gap-2 font-size-14">
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Tiền món ăn</span><span class="text-dark fw-semibold" id="detailSubtotal">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Phí vận chuyển</span><span class="text-dark fw-semibold" id="detailShippingFee">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Phí dịch vụ</span><span class="text-dark fw-semibold" id="detailServiceFee">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-success d-none" id="detailDiscountRow">
+                            <span>Giảm giá</span><strong id="detailDiscount">- 0 đ</strong>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Thanh toán bằng</span><span class="text-dark fw-semibold" id="detailPaymentMethod">—</span>
+                        </div>
+                        <div class="border-top pt-3 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark fs-6">Tổng thanh toán</span>
+                            <span class="fw-extrabold text-danger fs-4" id="detailTotal">0 đ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                <button type="button"
+                        class="btn btn-outline-danger rounded-pill px-4 fw-semibold d-none"
+                        id="detailCancelBtn">
+                    <i class="bi bi-x-circle me-1"></i>Hủy đơn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL HỦY ĐƠN ==================== -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark">Hủy đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <p class="text-muted font-size-14 mb-3">
+                    Bạn đang hủy đơn <span class="font-monospace fw-semibold text-dark" id="cancelOrderCode">—</span>.
+                    Đơn chỉ hủy được khi quán chưa bấm nhận đơn.
+                </p>
+
+                <label class="form-label fw-semibold font-size-14" for="cancelReasonInput">
+                    Lý do hủy <span class="text-danger">*</span>
+                </label>
+
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <span class="badge bg-light text-dark border cancel-reason-chip" data-reason="Tôi đặt nhầm món">Đặt nhầm món</span>
+                    <span class="badge bg-light text-dark border cancel-reason-chip" data-reason="Tôi muốn thay đổi địa chỉ giao hàng">Đổi địa chỉ giao</span>
+                    <span class="badge bg-light text-dark border cancel-reason-chip" data-reason="Tôi không còn nhu cầu đặt món nữa">Không cần nữa</span>
+                    <span class="badge bg-light text-dark border cancel-reason-chip" data-reason="Thời gian giao hàng dự kiến quá lâu">Giao quá lâu</span>
+                </div>
+
+                <textarea class="form-control" id="cancelReasonInput" rows="3" maxlength="400"
+                          placeholder="Cho quán biết vì sao bạn hủy đơn này"></textarea>
+
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-danger d-none" id="cancelReasonError">Nhập lý do hủy trước khi xác nhận.</small>
+                    <small class="text-muted ms-auto"><span id="cancelReasonCount">0</span>/400</small>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Giữ đơn hàng</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold" id="confirmCancelBtn">
+                    Xác nhận hủy
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/user-order.js}"></script>
+
+</body>
+</html>

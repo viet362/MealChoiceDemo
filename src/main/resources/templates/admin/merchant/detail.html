@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Chi tiết Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+
+<div th:replace="~{admin/layout :: shell(
+    'Chi tiết Merchant',
+    'merchants',
+    ~{::content}
+)}">
+    <section th:fragment="content">
+
+        <!-- Header trang -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">Chi tiết Merchant</h2>
+                <p class="text-muted mb-0">
+                    Xem thông tin chi tiết, địa chỉ và quản lý trạng thái hoạt động của merchant.
+                </p>
+            </div>
+
+            <a th:href="@{/admin/merchants}" class="btn btn-outline-dark rounded-pill px-3">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+        </div>
+
+        <!-- Thông báo thành công / lỗi -->
+        <div th:if="${message}" class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${message}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Thông tin tổng quan Merchant -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-shop me-2 text-primary"></i>Thông tin nhà hàng
+                </h5>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <!-- Tên nhà hàng -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Tên nhà hàng</label>
+                        <div class="fw-bold text-dark fs-5" th:text="${merchant.merchantRestaurantName}"></div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Email</label>
+                        <div class="fw-semibold text-dark" th:text="${merchant.merchantEmail}"></div>
+                    </div>
+
+                    <!-- Số điện thoại -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Số điện thoại</label>
+                        <div class="fw-semibold text-dark" th:text="${merchant.merchantPhone}"></div>
+                    </div>
+
+                    <!-- Trạng thái -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold d-block">Trạng thái</label>
+                        <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                              class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+                            <i class="bi bi-hourglass-split me-1"></i> Chờ duyệt
+                        </span>
+                        <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+                              class="badge bg-success px-3 py-2 rounded-pill">
+                            <i class="bi bi-check-circle me-1"></i> Đã duyệt
+                        </span>
+                        <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).REJECTED}"
+                              class="badge bg-danger px-3 py-2 rounded-pill">
+                            <i class="bi bi-x-circle me-1"></i> Từ chối
+                        </span>
+                        <span th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+                              class="badge bg-secondary px-3 py-2 rounded-pill">
+                            <i class="bi bi-lock me-1"></i> Đã khóa
+                        </span>
+                    </div>
+
+                    <!-- Đối tác thân thiết -->
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold d-block">Hạng đối tác</label>
+                        <span th:if="${merchant.trustedPartner}" class="badge bg-primary px-3 py-2 rounded-pill">
+                            <i class="bi bi-patch-check-fill me-1"></i> Đối tác thân thiết
+                        </span>
+                        <span th:unless="${merchant.trustedPartner}" class="text-muted">
+                            Chưa phải đối tác thân thiết
+                        </span>
+                    </div>
+
+                    <!-- Lý do từ chối (nếu có) -->
+                    <div class="col-12" th:if="${merchant.rejectReason != null and !merchant.rejectReason.isBlank()}">
+                        <label class="text-muted small fw-semibold d-block mb-1">Lý do từ chối</label>
+                        <div class="alert alert-danger mb-0 rounded-3 border-0 bg-danger bg-opacity-10 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <span th:text="${merchant.rejectReason}"></span>
+                        </div>
+                    </div>
+
+                    <!-- Lý do khóa (nếu có) -->
+                    <div class="col-12" th:if="${merchant.lockReason != null and !merchant.lockReason.isBlank()}">
+                        <label class="text-muted small fw-semibold d-block mb-1">Lý do bị khóa</label>
+                        <div class="alert alert-secondary mb-0 rounded-3 border-0 bg-secondary bg-opacity-10 text-secondary-emphasis">
+                            <i class="bi bi-lock-fill me-2"></i>
+                            <span th:text="${merchant.lockReason}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách địa chỉ & Giờ hoạt động -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-0 pt-4 px-4 pb-0">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-geo-alt me-2 text-danger"></i>Địa chỉ & Thời gian mở cửa
+                </h5>
+            </div>
+
+            <div class="card-body p-0">
+                <div th:if="${#lists.isEmpty(merchant.addresses)}" class="text-center text-muted py-5">
+                    <i class="bi bi-geo-alt fs-1 d-block mb-2 text-secondary"></i>
+                    Merchant chưa cập nhật địa chỉ hoạt động.
+                </div>
+
+                <div th:unless="${#lists.isEmpty(merchant.addresses)}" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">STT</th>
+                            <th>Địa chỉ nhà hàng</th>
+                            <th class="text-center">Giờ mở cửa</th>
+                            <th class="text-center">Giờ đóng cửa</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="address, stat : ${merchant.addresses}">
+                            <td class="ps-4 fw-semibold" th:text="${stat.count}">1</td>
+                            <td>
+                                <i class="bi bi-geo-alt-fill text-danger me-2"></i>
+                                <span class="fw-semibold text-dark" th:text="${address.merchantAddress}"></span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${address.merchantOpenTime != null}"
+                                      class="badge bg-light text-dark border px-3 py-2 rounded-pill"
+                                      th:text="${#temporals.format(address.merchantOpenTime, 'HH:mm')}">08:00</span>
+                                <span th:unless="${address.merchantOpenTime != null}" class="text-muted small">--:--</span>
+                            </td>
+                            <td class="text-center">
+                                <span th:if="${address.merchantCloseTime != null}"
+                                      class="badge bg-light text-dark border px-3 py-2 rounded-pill"
+                                      th:text="${#temporals.format(address.merchantCloseTime, 'HH:mm')}">22:00</span>
+                                <span th:unless="${address.merchantCloseTime != null}" class="text-muted small">--:--</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thanh Thao Tác Chức Năng -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3 text-dark">Thao tác quản trị</h5>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <!-- Duyệt Merchant -->
+                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                          th:action="@{/admin/merchants/{id}/approve(id=${merchant.id})}"
+                          method="post">
+                        <button type="submit" class="btn btn-success rounded-pill px-4">
+                            <i class="bi bi-check-lg me-1"></i> Duyệt Merchant
+                        </button>
+                    </form>
+
+                    <!-- Từ chối Merchant -->
+                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+                            type="button"
+                            class="btn btn-danger rounded-pill px-4"
+                            data-bs-toggle="modal"
+                            data-bs-target="#rejectModal">
+                        <i class="bi bi-x-lg me-1"></i> Từ chối
+                    </button>
+
+                    <!-- Khóa Merchant -->
+                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+                            type="button"
+                            class="btn btn-outline-danger rounded-pill px-4"
+                            data-bs-toggle="modal"
+                            data-bs-target="#lockModal">
+                        <i class="bi bi-lock me-1"></i> Khóa Merchant
+                    </button>
+
+                    <!-- Mở khóa Merchant -->
+                    <button th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+                            type="button"
+                            class="btn btn-outline-success rounded-pill px-4"
+                            data-bs-toggle="modal"
+                            data-bs-target="#unlockModal">
+                        <i class="bi bi-unlock me-1"></i> Mở khóa Merchant
+                    </button>
+
+                    <!-- Duyệt đối tác thân thiết -->
+                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED and !merchant.trustedPartner}"
+                          th:action="@{/admin/merchants/{id}/trusted-partner(id=${merchant.id})}"
+                          method="post">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">
+                            <i class="bi bi-star me-1"></i> Duyệt đối tác thân thiết
+                        </button>
+                    </form>
+
+                    <!-- Bỏ đối tác thân thiết -->
+                    <form th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED and merchant.trustedPartner}"
+                          th:action="@{/admin/merchants/{id}/trusted-partner/remove(id=${merchant.id})}"
+                          method="post">
+                        <button type="submit" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-star-fill me-1"></i> Bỏ đối tác thân thiết
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Từ chối -->
+        <div th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).PENDING}"
+             class="modal fade"
+             id="rejectModal"
+             tabindex="-1"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Từ chối Merchant</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/admin/merchants/{id}/reject(id=${merchant.id})}" method="post">
+                        <div class="modal-body p-4 text-start">
+                            <p class="mb-2">
+                                Nhập lý do từ chối đăng ký của <strong th:text="${merchant.merchantRestaurantName}"></strong>:
+                            </p>
+                            <textarea name="rejectReason"
+                                      class="form-control rounded-3"
+                                      rows="4"
+                                      placeholder="Ví dụ: Thông tin liên hệ không hợp lệ, chưa đầy đủ giấy phép..."
+                                      required></textarea>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-danger rounded-pill px-3">Xác nhận từ chối</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Khóa -->
+        <div th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).APPROVED}"
+             class="modal fade"
+             id="lockModal"
+             tabindex="-1"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Xác nhận khóa Merchant</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}" method="post">
+                        <div class="modal-body p-4 text-start">
+                            <p class="mb-2">Bạn có chắc chắn muốn khóa Merchant:</p>
+                            <h5 class="fw-bold text-danger mb-4" th:text="${merchant.merchantRestaurantName}"></h5>
+                            <div class="mb-3">
+                                <label for="lockReason" class="form-label fw-semibold">Lý do khóa <span class="text-danger">*</span></label>
+                                <textarea id="lockReason"
+                                          name="lockReason"
+                                          class="form-control rounded-3"
+                                          rows="4"
+                                          maxlength="500"
+                                          required
+                                          placeholder="Nhập lý do khóa..."></textarea>
+                            </div>
+                            <div class="alert alert-warning mb-0 rounded-3">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <strong>Cảnh báo:</strong> Merchant sẽ bị tạm ngưng toàn bộ hoạt động bán hàng.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-danger rounded-pill px-3">
+                                <i class="bi bi-lock me-1"></i> Xác nhận khóa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Mở khóa -->
+        <div th:if="${merchant.merchantStatus == T(vn.codegyme.meal_choice.entity.MerchantStatus).BLOCKED}"
+             class="modal fade"
+             id="unlockModal"
+             tabindex="-1"
+             aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="bi bi-unlock me-2"></i>Xác nhận mở khóa Merchant</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form th:action="@{/admin/merchants/{id}/toggle-lock(id=${merchant.id})}" method="post">
+                        <div class="modal-body p-4 text-start">
+                            <p class="mb-2">Bạn có chắc chắn muốn mở khóa Merchant:</p>
+                            <h5 class="fw-bold text-success mb-3" th:text="${merchant.merchantRestaurantName}"></h5>
+                            <div class="alert alert-info mt-3 mb-0 rounded-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Merchant sẽ có thể đăng nhập và kinh doanh lại bình thường.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-3">
+                                <i class="bi bi-unlock me-1"></i> Xác nhận mở khóa
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </section>
+</div>
+
+</body>
+</html>

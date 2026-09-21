@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${merchant.merchantRestaurantName + ' - Thực đơn & Đặt món | MealChoice'}">Chi tiết cửa hàng - MealChoice</title>
+    
+    <!-- Bootstrap 5 CSS & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .transition-hover {
+            transition: all 0.25s ease;
+        }
+        .transition-hover:hover {
+            transform: translateY(-2px);
+        }
+        .food-card {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border-radius: 16px;
+        }
+        .food-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12) !important;
+        }
+        .store-hero-card {
+            border-radius: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #fdfbfb 100%);
+        }
+        .store-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 8px 16px rgba(255, 65, 108, 0.25);
+            flex-shrink: 0;
+        }
+        .category-tab-btn {
+            border-radius: 50px;
+            padding: 8px 18px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        .category-tab-btn.active {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: #fff !important;
+            box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+            border-color: transparent;
+        }
+        .category-tab-btn:not(.active) {
+            background-color: #ffffff;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        .category-tab-btn:not(.active):hover {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border-color: #cbd5e1;
+        }
+        .fs-7 { font-size: 0.875rem; }
+        .fs-8 { font-size: 0.8rem; }
+        .fs-9 { font-size: 0.725rem; }
+        .shadow-xs { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06); }
+    </style>
+</head>
+<body>
+
+<!-- 1. Header & Navigation -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<!-- 2. Main Container -->
+<main class="container my-4 py-2">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb fs-7 mb-0">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="bi bi-house-door me-1"></i>Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="/search" class="text-decoration-none text-muted">Cửa hàng</a></li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" th:text="${merchant.merchantRestaurantName}">Tên cửa hàng</li>
+        </ol>
+    </nav>
+
+    <!-- 3. Store Hero Header Info Card -->
+    <div class="card border-0 shadow-sm store-hero-card p-4 p-md-4 mb-4 overflow-hidden">
+        <div class="row g-4 align-items-center">
+            <!-- Cột trái: Avatar & Thông tin cơ bản -->
+            <div class="col-12 col-lg-8">
+                <div class="d-flex align-items-start gap-3.5">
+                    <!-- Store Avatar / Logo -->
+                    <div class="store-avatar">
+                        <i class="bi bi-shop"></i>
+                    </div>
+
+                    <!-- Tên quán & Thông tin chi tiết -->
+                    <div class="flex-grow-1">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1.5">
+                            <h1 class="h3 fw-extrabold text-dark mb-0" th:text="${merchant.merchantRestaurantName}">Tên Quán Ăn</h1>
+                            
+                            <!-- Badge Trusted Partner -->
+                            <span th:if="${merchant.trustedPartner}" 
+                                  class="badge bg-success bg-opacity-10 text-success rounded-pill px-2.5 py-1 fs-8 fw-semibold">
+                                <i class="bi bi-patch-check-fill me-1"></i>Đối tác chọn lọc
+                            </span>
+
+                            <!-- Badge Trạng thái mở/đóng cửa -->
+                            <span th:if="${isOpenNow}" 
+                                  class="badge bg-success text-white rounded-pill px-2.5 py-1 fs-8 fw-bold">
+                                <i class="bi bi-dot"></i>Đang mở cửa
+                            </span>
+                            <span th:unless="${isOpenNow}" 
+                                  class="badge bg-secondary text-white rounded-pill px-2.5 py-1 fs-8 fw-bold">
+                                <i class="bi bi-moon-stars-fill me-1"></i>Đã đóng cửa
+                            </span>
+                        </div>
+
+                        <!-- Địa chỉ chi tiết -->
+                        <p class="text-muted fs-7 mb-2 d-flex align-items-start gap-1.5">
+                            <i class="bi bi-geo-alt-fill text-danger flex-shrink-0 mt-0.5"></i>
+                            <span th:text="${defaultAddress != null ? defaultAddress.merchantAddress : 'Chưa cập nhật địa chỉ'}">25 Hàng Bông, Quận Hoàn Kiếm, Hà Nội</span>
+                        </p>
+
+                        <!-- Khung giờ & Hotline -->
+                        <div class="d-flex flex-wrap align-items-center gap-3 text-muted fs-8 mb-3">
+                            <div class="d-flex align-items-center gap-1">
+                                <i class="bi bi-clock text-primary"></i>
+                                <span>Giờ mở cửa: </span>
+                                <strong class="text-dark" 
+                                        th:if="${defaultAddress != null and defaultAddress.merchantOpenTime != null and defaultAddress.merchantCloseTime != null}"
+                                        th:text="${#temporals.format(defaultAddress.merchantOpenTime, 'HH:mm') + ' - ' + #temporals.format(defaultAddress.merchantCloseTime, 'HH:mm')}">07:00 - 22:00</strong>
+                                <strong class="text-dark" th:unless="${defaultAddress != null and defaultAddress.merchantOpenTime != null and defaultAddress.merchantCloseTime != null}">Cả ngày</strong>
+                            </div>
+                            <div class="d-flex align-items-center gap-1" th:if="${merchant.merchantPhone != null}">
+                                <i class="bi bi-telephone text-success"></i>
+                                <span>Hotline: </span>
+                                <a th:href="'tel:' + ${merchant.merchantPhone}" class="text-decoration-none text-dark fw-semibold" th:text="${merchant.merchantPhone}">0900000000</a>
+                            </div>
+                        </div>
+
+                        <!-- Tag thế mạnh / Dòng món chủ đạo của quán (Top 2 danh mục nhiều món nhất) -->
+                        <div class="d-flex flex-wrap align-items-center gap-1.5" th:if="${topSpecialties != null and !#lists.isEmpty(topSpecialties)}">
+                            <span class="fs-8 text-muted fw-bold me-1"><i class="bi bi-fire text-danger me-1"></i>Món thế mạnh:</span>
+                            <a th:each="cat : ${topSpecialties}" 
+                               th:href="@{'/stores/' + ${merchant.id}(categoryId=${cat.id})}"
+                               th:class="${selectedCategoryId == cat.id} ? 'badge bg-danger text-white rounded-pill px-3 py-1.5 fs-8 text-decoration-none transition-hover shadow-xs' : 'badge bg-white text-danger border border-danger border-opacity-25 rounded-pill px-3 py-1.5 fs-8 text-decoration-none transition-hover shadow-xs'"
+                               th:text="${cat.categoryName}">Cơm & Món Việt</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Thống kê & Nút Follow -->
+            <div class="col-12 col-lg-4">
+                <div class="bg-light bg-opacity-75 rounded-4 p-3.5 border border-light-subtle d-flex flex-column gap-3">
+                    <div class="d-flex justify-content-around text-center py-1">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-center gap-1 text-warning fw-extrabold fs-5">
+                                <i class="bi bi-star-fill"></i>
+                                <span>4.8</span>
+                            </div>
+                            <span class="text-muted fs-8">150+ Đánh giá</span>
+                        </div>
+                        <div class="border-end border-light-subtle"></div>
+                        <div>
+                            <div class="fw-extrabold text-dark fs-5" th:text="${totalFoods}">12</div>
+                            <span class="text-muted fs-8">Món ăn</span>
+                        </div>
+                        <div class="border-end border-light-subtle"></div>
+                        <div>
+                            <div class="fw-extrabold text-dark fs-5" id="storeFollowerCount" th:text="${followerCount}">45</div>
+                            <span class="text-muted fs-8">Người theo dõi</span>
+                        </div>
+                    </div>
+
+                    <!-- Nút Follow quán -->
+                    <button type="button" 
+                            th:class="${likedMerchantIds != null and likedMerchantIds.contains(merchant.id.toString())} ? 'btn btn-danger w-100 rounded-pill py-2.5 fw-bold transition-hover shadow-sm btn-follow-merchant d-flex align-items-center justify-content-center gap-1.5' : 'btn btn-outline-danger w-100 rounded-pill py-2.5 fw-bold transition-hover btn-follow-merchant d-flex align-items-center justify-content-center gap-1.5'"
+                            th:data-merchant-id="${merchant.id.toString()}"
+                            id="btnStoreFollow">
+                        <i th:class="${likedMerchantIds != null and likedMerchantIds.contains(merchant.id.toString())} ? 'bi bi-check-lg fs-6' : 'bi bi-plus-lg fs-6'"></i>
+                        <span th:text="${likedMerchantIds != null and likedMerchantIds.contains(merchant.id.toString())} ? 'Đang theo dõi quán' : 'Theo dõi quán'">Theo dõi quán</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Thực đơn của quán (Store Menu Section) -->
+    <div class="mb-4">
+        <!-- Thanh điều hướng danh mục & Tìm kiếm nội bộ -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+            <div class="row g-3 align-items-center">
+                <!-- Danh sách Tabs danh mục -->
+                <div class="col-12 col-md-7 col-lg-8">
+                    <div class="d-flex align-items-center gap-2 overflow-x-auto pb-1 pb-md-0" style="scrollbar-width: thin;">
+                        <!-- Tab Tất cả -->
+                        <a th:href="@{'/stores/' + ${merchant.id}}"
+                           th:class="${selectedCategoryId == null and (keyword == null or keyword.isBlank())} ? 'category-tab-btn active' : 'category-tab-btn'">
+                            <i class="bi bi-grid-fill me-1"></i>Tất cả món
+                        </a>
+
+                        <!-- Các Category Tabs -->
+                        <a th:each="cat : ${storeCategories}"
+                           th:href="@{'/stores/' + ${merchant.id}(categoryId=${cat.id})}"
+                           th:class="${selectedCategoryId == cat.id} ? 'category-tab-btn active' : 'category-tab-btn'"
+                           th:text="${cat.categoryName}">
+                            Món chính
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Form tìm kiếm món trong thực đơn quán -->
+                <div class="col-12 col-md-5 col-lg-4">
+                    <form th:action="@{'/stores/' + ${merchant.id}}" method="get" class="position-relative">
+                        <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" th:if="${selectedCategoryId != null}">
+                        <div class="input-group">
+                            <input type="text" 
+                                   name="keyword" 
+                                   th:value="${keyword}" 
+                                   class="form-control rounded-pill-start border-end-0 bg-light fs-7 ps-3 py-2" 
+                                   placeholder="Tìm món trong quán..." 
+                                   aria-label="Tìm món">
+                            <button class="btn btn-danger rounded-pill-end px-3 py-2" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tiêu đề mục thực đơn -->
+        <div class="d-flex align-items-center justify-content-between mb-3 px-1">
+            <h4 class="fw-extrabold text-dark mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-book text-danger"></i>
+                <span th:if="${keyword != null and !keyword.isBlank()}" th:text="'Kết quả tìm kiếm cho: &quot;' + ${keyword} + '&quot;'">Kết quả tìm kiếm</span>
+                <span th:unless="${keyword != null and !keyword.isBlank()}">Thực đơn món ăn</span>
+            </h4>
+            <span class="text-muted fs-7" th:text="${foodPage != null ? foodPage.totalElements + ' món có sẵn' : '0 món'}">0 món</span>
+        </div>
+
+        <!-- 5. Lưới món ăn (Food Cards Grid) -->
+        <div th:if="${foodPage != null and !foodPage.isEmpty()}">
+            <div class="row g-3 g-md-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4">
+                <div class="col" th:each="f : ${foodPage.content}">
+                    <div class="card h-100 border-0 shadow-sm food-card bg-white overflow-hidden d-flex flex-column position-relative">
+                        <!-- Discount Badge -->
+                        <span th:if="${f.discountPrice != null and f.price != null and f.price > 0}"
+                              class="position-absolute top-0 start-0 m-2.5 z-2 text-white fw-bold fs-9 shadow-sm"
+                              style="background-color: #ff4b2b; padding: 4px 10px; border-radius: 50px;"
+                              th:text="'-' + ${#numbers.formatDecimal((f.price - f.discountPrice) / f.price * 100, 0, 0)} + '%'">-20%</span>
+
+                        <!-- Wishlist Button -->
+                        <button class="btn btn-light btn-sm rounded-circle position-absolute top-0 end-0 m-2.5 z-2 shadow-xs d-flex align-items-center justify-content-center btn-wishlist"
+                                style="width: 34px; height: 34px;"
+                                th:data-food-id="${f.id}"
+                                th:title="${likedFoodIds != null and likedFoodIds.contains(f.id)} ? 'Bỏ yêu thích' : 'Yêu thích'">
+                            <i th:class="${likedFoodIds != null and likedFoodIds.contains(f.id)} ? 'bi bi-heart-fill text-danger fs-7' : 'bi bi-heart text-danger fs-7'"></i>
+                        </button>
+
+                        <!-- Food Image -->
+                        <a th:href="@{'/foods/' + ${f.id}}" class="ratio ratio-4x3 bg-light overflow-hidden text-decoration-none">
+                            <img th:src="${f.images != null and !#lists.isEmpty(f.images)} ? ${f.images[0].imageUrl} : 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80'" 
+                                 class="card-img-top object-fit-cover w-100 h-100 transition-hover" 
+                                 th:alt="${f.foodName}">
+                        </a>
+
+                        <!-- Food Card Body -->
+                        <div class="card-body p-3 d-flex flex-column">
+                            <!-- Category Badge & Tags -->
+                            <div class="d-flex align-items-center gap-1.5 mb-1.5">
+                                <span th:if="${f.foodCategories != null and !#lists.isEmpty(f.foodCategories)}" 
+                                      class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 fs-9" 
+                                      th:text="${f.foodCategories[0].categoryName}">Món chính</span>
+                                <span th:if="${f.tags != null and !#lists.isEmpty(f.tags)}" 
+                                      class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2 py-0.5 fs-9 fw-semibold" 
+                                      th:text="${f.tags[0].tagName}">Bán chạy</span>
+                            </div>
+
+                            <!-- Food Name -->
+                            <h6 class="card-title fw-bold text-dark mb-1 text-truncate">
+                                <a th:href="@{'/foods/' + ${f.id}}" class="text-decoration-none text-dark transition-hover" th:text="${f.foodName}">Tên món ăn</a>
+                            </h6>
+
+                            <!-- Short Note -->
+                            <p class="text-muted fs-8 mb-2 line-clamp-1 text-truncate" th:text="${f.foodNote != null and !#strings.isEmpty(f.foodNote) ? f.foodNote : 'Món ngon đậm vị chuẩn vị quán'}" style="max-height: 2.4em;">Ghi chú món ăn</p>
+
+                            <!-- Price & Actions -->
+                            <div class="mt-auto pt-2 border-top border-light-subtle d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="fw-extrabold text-danger fs-6" 
+                                         th:text="${f.discountPrice != null ? #numbers.formatDecimal(f.discountPrice, 0, 'COMMA', 0, 'POINT') + ' đ' : #numbers.formatDecimal(f.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">45.000 đ</div>
+                                    <small th:if="${f.discountPrice != null}" class="text-muted text-decoration-line-through fs-9" th:text="${#numbers.formatDecimal(f.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">60.000 đ</small>
+                                </div>
+
+                                <!-- Nút Thêm vào giỏ -->
+                                <button type="button" 
+                                        class="btn btn-outline-danger btn-sm rounded-circle d-flex align-items-center justify-content-center btn-quick-add-cart transition-hover"
+                                        style="width: 36px; height: 36px;"
+                                        th:data-food-id="${f.id}"
+                                        th:data-food-name="${f.foodName}"
+                                        th:data-food-price="${f.price}"
+                                        th:data-food-discount="${f.discountPrice}"
+                                        th:data-food-service="${f.serviceFee}"
+                                        th:data-merchant-id="${merchant.id}"
+                                        th:data-merchant-name="${merchant.merchantRestaurantName}"
+                                        th:data-food-image="${f.images != null and !#lists.isEmpty(f.images) ? f.images[0].imageUrl : ''}"
+                                        title="Thêm vào giỏ hàng">
+                                    <i class="bi bi-cart-plus fs-6"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-4 pt-2" th:if="${foodPage.totalPages > 1}">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li th:class="${foodPage.first} ? 'page-item disabled' : 'page-item'">
+                            <a class="page-link rounded-pill-start" th:href="@{'/stores/' + ${merchant.id}(categoryId=${selectedCategoryId}, keyword=${keyword}, page=${foodPage.number - 1})}">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                        <li th:each="i : ${#numbers.sequence(0, foodPage.totalPages - 1)}"
+                            th:class="${foodPage.number == i} ? 'page-item active' : 'page-item'">
+                            <a class="page-link" th:href="@{'/stores/' + ${merchant.id}(categoryId=${selectedCategoryId}, keyword=${keyword}, page=${i})}" th:text="${i + 1}">1</a>
+                        </li>
+                        <li th:class="${foodPage.last} ? 'page-item disabled' : 'page-item'">
+                            <a class="page-link rounded-pill-end" th:href="@{'/stores/' + ${merchant.id}(categoryId=${selectedCategoryId}, keyword=${keyword}, page=${foodPage.number + 1})}">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Empty State khi không có món -->
+        <div th:unless="${foodPage != null and !foodPage.isEmpty()}" class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white my-4">
+            <div class="mb-3">
+                <i class="bi bi-emoji-smile text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">Chưa có món ăn nào phù hợp</h5>
+            <p class="text-muted fs-7 mb-3">Hiện chưa có món ăn trong danh mục này hoặc không tìm thấy kết quả tìm kiếm.</p>
+            <div>
+                <a th:href="@{'/stores/' + ${merchant.id}}" class="btn btn-outline-danger rounded-pill px-4 py-2 fw-semibold fs-7 transition-hover">
+                    <i class="bi bi-arrow-left me-1"></i>Xem tất cả thực đơn
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- 6. Footer -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Quick Add to Cart & Follow Store Scripts -->
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        // Xử lý nút thêm nhanh vào giỏ hàng
+        document.querySelectorAll('.btn-quick-add-cart').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const foodItem = {
+                    id: parseInt(btn.dataset.foodId),
+                    name: btn.dataset.foodName,
+                    price: parseFloat(btn.dataset.foodPrice) || 0,
+                    discountPrice: btn.dataset.foodDiscount ? parseFloat(btn.dataset.foodDiscount) : null,
+                    serviceFee: btn.dataset.foodService ? parseFloat(btn.dataset.foodService) : 0,
+                    merchantId: btn.dataset.merchantId || '',
+                    merchantName: btn.dataset.merchantName || '',
+                    image: btn.dataset.foodImage || ''
+                };
+
+                if (typeof addToCartGlobal === 'function') {
+                    addToCartGlobal(foodItem);
+                } else if (typeof addToGlobalCart === 'function') {
+                    addToGlobalCart(foodItem);
+                }
+
+                // Hiệu ứng phản hồi nút
+                const originalHtml = btn.innerHTML;
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-success');
+                btn.innerHTML = '<i class="bi bi-check-lg fs-6 text-white"></i>';
+                setTimeout(() => {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-danger');
+                    btn.innerHTML = originalHtml;
+                }, 1200);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

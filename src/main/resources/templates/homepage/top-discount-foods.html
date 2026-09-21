@@ -1,0 +1,37 @@
+<!-- Fragment 8 Món Ăn Giảm Giá Nhiều Nhất (2 hàng x 4 cột) -->
+<section th:fragment="topDiscountFoods" th:if="${foodPage == null or foodPage.number == 0}" class="top-discount-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+    <div class="container bg-white rounded-4 shadow-sm p-4">
+        <!-- Section Header -->
+        <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2 border-bottom pb-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-danger text-white rounded-pill px-2.5 py-1 fs-8 fw-bold">
+                        <i class="bi bi-fire me-1"></i>Siêu Sale Giảm Đến 50%
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-0">Món Ăn Giảm Giá Nhiều Nhất</h3>
+                <p class="text-muted fs-8 mb-0 mt-1">Săn món ngon giảm giá sâu nhất từ các quán ăn được yêu thích</p>
+            </div>
+
+            <!-- Chuyển href sang th:href chuẩn Thymeleaf -->
+            <a th:href="@{/restaurants/top-discounts}" class="btn btn-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1 shadow-sm">
+                <span>Xem thêm ưu đãi</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Foods Grid (2 hàng x 4 cột = 8 items) -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <th:block th:if="${topDiscountFoods != null and !#lists.isEmpty(topDiscountFoods)}">
+                <th:block th:each="food : ${topDiscountFoods}">
+                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                </th:block>
+            </th:block>
+
+            <div th:if="${topDiscountFoods == null or #lists.isEmpty(topDiscountFoods)}" class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-tag fs-1 d-block mb-2 text-danger"></i>
+                <p class="mb-0">Đang cập nhật các món ăn giảm giá hot nhất...</p>
+            </div>
+        </div>
+    </div>
+</section>

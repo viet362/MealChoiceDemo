@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Quản lý đối tác vận chuyển</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+          rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+
+<!-- NAVBAR -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+
+<div class="container py-4">
+
+
+    <!-- =============================================== -->
+    <!-- HEADER -->
+    <!-- =============================================== -->
+
+    <div class="d-flex justify-content-between
+                align-items-center
+                flex-wrap gap-3 mb-4">
+
+        <div>
+
+            <h3 class="fw-bold mb-1 text-danger">
+
+                <i class="bi bi-truck me-2"></i>
+
+                Đối tác vận chuyển
+
+            </h3>
+
+            <p class="text-muted mb-0">
+
+                Quản lý danh sách,
+                bảng giá và trạng thái đối tác vận chuyển.
+
+            </p>
+
+        </div>
+
+
+        <a th:href="@{/admin/delivery-partners/create}"
+           class="btn btn-danger rounded-pill px-4">
+
+            <i class="bi bi-plus-circle me-1"></i>
+
+            Thêm đối tác
+
+        </a>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- MESSAGE -->
+    <!-- =============================================== -->
+
+    <div th:if="${message}"
+         class="alert alert-success alert-dismissible fade show">
+
+        <span th:text="${message}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+
+    </div>
+
+
+    <div th:if="${error}"
+         class="alert alert-danger alert-dismissible fade show">
+
+        <span th:text="${error}"></span>
+
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert">
+        </button>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- FILTER -->
+    <!-- =============================================== -->
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+
+        <div class="card-body">
+
+            <div class="d-flex gap-2 flex-wrap">
+
+
+                <a th:href="@{/admin/delivery-partners}"
+                   class="btn rounded-pill"
+                   th:classappend="${selectedStatus == null}
+                       ? 'btn-danger'
+                       : 'btn-outline-secondary'">
+
+                    Tất cả
+
+                </a>
+
+
+                <a th:href="@{/admin/delivery-partners(status='ACTIVE')}"
+                   class="btn rounded-pill"
+                   th:classappend="${selectedStatus != null
+                                    && selectedStatus.name() == 'ACTIVE'}
+                       ? 'btn-success'
+                       : 'btn-outline-success'">
+
+                    Đang hoạt động
+
+                </a>
+
+
+                <a th:href="@{/admin/delivery-partners(status='BLOCKED')}"
+                   class="btn rounded-pill"
+                   th:classappend="${selectedStatus != null
+                                    && selectedStatus.name() == 'BLOCKED'}
+                       ? 'btn-secondary'
+                       : 'btn-outline-secondary'">
+
+                    Đã khóa
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =============================================== -->
+    <!-- TABLE -->
+    <!-- =============================================== -->
+
+    <div class="card border-0 shadow-sm rounded-4">
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                    <tr>
+
+                        <th class="ps-4">
+                            STT
+                        </th>
+
+                        <th>
+                            Mã
+                        </th>
+
+                        <th>
+                            Đối tác
+                        </th>
+
+                        <th>
+                            Điện thoại
+                        </th>
+
+                        <th>
+                            Phí cơ bản
+                        </th>
+
+                        <th>
+                            Giá/km
+                        </th>
+
+                        <th>
+                            Cao điểm
+                        </th>
+
+                        <th>
+                            Trạng thái
+                        </th>
+
+                        <th class="text-end pe-4">
+                            Thao tác
+                        </th>
+
+                    </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                    <!-- KHÔNG CÓ DỮ LIỆU -->
+
+                    <tr th:if="${#lists.isEmpty(partners)}">
+
+                        <td colspan="9"
+                            class="text-center py-5 text-muted">
+
+                            <i class="bi bi-truck fs-1 d-block mb-3"></i>
+
+                            Chưa có đối tác vận chuyển.
+
+                        </td>
+
+                    </tr>
+
+
+                    <!-- LIST -->
+
+                    <tr th:each="partner, stat : ${partners}">
+
+
+                        <td class="ps-4"
+                            th:text="${stat.count}">
+                            1
+                        </td>
+
+
+                        <td>
+
+                            <span class="badge bg-light
+                                         text-dark border"
+                                  th:text="${partner.partnerCode}">
+
+                                GHN
+
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            <div class="fw-bold"
+                                 th:text="${partner.partnerName}">
+
+                                Giao Hàng Nhanh
+
+                            </div>
+
+
+                            <small class="text-muted"
+                                   th:text="${partner.email}">
+
+                                email@gmail.com
+
+                            </small>
+
+                        </td>
+
+
+                        <td th:text="${partner.phone}">
+                            0900000000
+                        </td>
+
+
+                        <!-- PHÍ CƠ BẢN -->
+
+                        <td>
+
+                            <span th:text="${#numbers.formatDecimal(
+                                    partner.baseFee,
+                                    0,
+                                    'COMMA',
+                                    0,
+                                    'POINT'
+                                    ) + ' đ'}">
+
+                                15.000 đ
+
+                            </span>
+
+
+                            <div class="small text-muted">
+
+                                <span th:text="${partner.baseDistanceKm}">
+                                    3
+                                </span>
+
+                                km đầu
+
+                            </div>
+
+                        </td>
+
+
+                        <!-- PHÍ / KM -->
+
+                        <td>
+
+                            <span th:text="${#numbers.formatDecimal(
+                                    partner.feePerKm,
+                                    0,
+                                    'COMMA',
+                                    0,
+                                    'POINT'
+                                    ) + ' đ/km'}">
+
+                                5.000 đ/km
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- CAO ĐIỂM -->
+
+                        <td>
+
+                            <span class="badge bg-warning text-dark">
+
+                                x<span th:text="${partner.peakMultiplier}">
+                                    1.2
+                                </span>
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            <span th:if="${partner.status.name() == 'ACTIVE'}"
+                                  class="badge bg-success rounded-pill">
+
+                                <i class="bi bi-check-circle me-1"></i>
+
+                                Hoạt động
+
+                            </span>
+
+
+                            <span th:if="${partner.status.name() == 'BLOCKED'}"
+                                  class="badge bg-secondary rounded-pill">
+
+                                <i class="bi bi-lock-fill me-1"></i>
+
+                                Đã khóa
+
+                            </span>
+
+                        </td>
+
+
+                        <!-- ACTION -->
+
+                        <td class="text-end pe-4">
+
+                            <div class="d-flex justify-content-end gap-1">
+
+
+                                <!-- XEM -->
+
+                                <a th:href="@{/admin/delivery-partners/{id}(id=${partner.id})}"
+                                   class="btn btn-outline-dark btn-sm rounded-circle"
+                                   title="Chi tiết">
+
+                                    <i class="bi bi-eye"></i>
+
+                                </a>
+
+
+                                <!-- SỬA -->
+
+                                <a th:href="@{/admin/delivery-partners/{id}/edit(id=${partner.id})}"
+                                   class="btn btn-outline-primary btn-sm rounded-circle"
+                                   title="Sửa">
+
+                                    <i class="bi bi-pencil"></i>
+
+                                </a>
+
+
+                                <!-- KHÓA -->
+
+                                <button th:if="${partner.status.name() == 'ACTIVE'}"
+                                        type="button"
+                                        class="btn btn-outline-danger
+                                               btn-sm rounded-circle"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#lockPartnerModal"
+
+                                        th:data-name="${partner.partnerName}"
+
+                                        th:data-action="@{/admin/delivery-partners/{id}/toggle-lock(id=${partner.id})}"
+
+                                        title="Khóa">
+
+                                    <i class="bi bi-lock"></i>
+
+                                </button>
+
+
+                                <!-- MỞ KHÓA -->
+
+                                <button th:if="${partner.status.name() == 'BLOCKED'}"
+                                        type="button"
+                                        class="btn btn-outline-success
+                                               btn-sm rounded-circle"
+
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#unlockPartnerModal"
+
+                                        th:data-name="${partner.partnerName}"
+
+                                        th:data-action="@{/admin/delivery-partners/{id}/toggle-lock(id=${partner.id})}"
+
+                                        title="Mở khóa">
+
+                                    <i class="bi bi-unlock"></i>
+
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- MODAL KHÓA -->
+<!-- ===================================================== -->
+
+<div class="modal fade"
+     id="lockPartnerModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content border-0 shadow rounded-4">
+
+            <form id="lockPartnerForm"
+                  method="post">
+
+                <div class="modal-header bg-danger text-white">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-lock-fill me-2"></i>
+
+                        Khóa đối tác vận chuyển
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <p>
+
+                        Bạn đang khóa:
+
+                        <strong id="lockPartnerName"></strong>
+
+                    </p>
+
+
+                    <div class="mb-3">
+
+                        <label class="form-label fw-semibold">
+
+                            Lý do khóa
+                            <span class="text-danger">*</span>
+
+                        </label>
+
+
+                        <textarea name="lockReason"
+                                  class="form-control"
+                                  rows="4"
+                                  maxlength="500"
+                                  required
+                                  placeholder="Nhập lý do khóa đối tác...">
+                        </textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+
+                        Hủy
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="btn btn-danger">
+
+                        Xác nhận khóa
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ===================================================== -->
+<!-- MODAL MỞ KHÓA -->
+<!-- ===================================================== -->
+
+<div class="modal fade"
+     id="unlockPartnerModal"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-dialog-centered">
+
+        <div class="modal-content border-0 shadow rounded-4">
+
+            <form id="unlockPartnerForm"
+                  method="post">
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+
+                        <i class="bi bi-unlock-fill
+                                  text-success me-2"></i>
+
+                        Mở khóa đối tác
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal">
+                    </button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    Bạn có chắc muốn mở khóa
+
+                    <strong id="unlockPartnerName"></strong>
+
+                    ?
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-light"
+                            data-bs-dismiss="modal">
+
+                        Hủy
+
+                    </button>
+
+
+                    <button type="submit"
+                            class="btn btn-success">
+
+                        Mở khóa
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<script>
+
+    // =====================================================
+    // MODAL KHÓA
+    // =====================================================
+
+    const lockModal =
+        document.getElementById(
+            'lockPartnerModal'
+        );
+
+
+    lockModal?.addEventListener(
+        'show.bs.modal',
+        function (event) {
+
+            const button =
+                event.relatedTarget;
+
+
+            const name =
+                button.getAttribute(
+                    'data-name'
+                );
+
+
+            const action =
+                button.getAttribute(
+                    'data-action'
+                );
+
+
+            document.getElementById(
+                'lockPartnerName'
+            ).textContent = name;
+
+
+            document.getElementById(
+                'lockPartnerForm'
+            ).action = action;
+
+        }
+    );
+
+
+    // =====================================================
+    // MODAL MỞ KHÓA
+    // =====================================================
+
+    const unlockModal =
+        document.getElementById(
+            'unlockPartnerModal'
+        );
+
+
+    unlockModal?.addEventListener(
+        'show.bs.modal',
+        function (event) {
+
+            const button =
+                event.relatedTarget;
+
+
+            document.getElementById(
+                'unlockPartnerName'
+            ).textContent =
+                button.getAttribute(
+                    'data-name'
+                );
+
+
+            document.getElementById(
+                'unlockPartnerForm'
+            ).action =
+                button.getAttribute(
+                    'data-action'
+                );
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

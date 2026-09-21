@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Chủ - MealChoice | Đặt Đồ Ăn Trực Tuyến</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Homepage Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+</head>
+
+<body>
+
+    <!-- Include Navbar -->
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+
+    <!-- Main Content -->
+    <main>
+        <!-- 1. Hero Banner, Quick Search & Category Slider (Luôn hiển thị ở mọi trang) -->
+        <div th:replace="~{homepage/hero-banner :: heroBanner}"></div>
+
+        <!-- Các khối chỉ hiển thị ở Trang 1 (page == 0) -->
+        <th:block th:if="${foodPage == null or foodPage.number == 0}">
+            <!-- 2. 4 Khối Promo Nổi Bật -->
+            <div th:replace="~{homepage/promo-cards :: promoCards}"></div>
+
+            <!-- 3. Khối 8 Món Ăn Gợi Ý Gần Bạn Nhất -->
+            <div th:replace="~{homepage/suggested-foods :: suggestedFoods}"></div>
+
+            <!-- 4. Khối 8 Món Ăn Giảm Giá Nhiều Nhất -->
+            <div th:replace="~{homepage/top-discount-foods :: topDiscountFoods}"></div>
+        </th:block>
+
+        <!-- 5. Danh Sách Toàn Bộ Món Ăn: "Gợi ý món ăn hôm nay" (Phân trang 30 món/trang) -->
+        <div th:replace="~{homepage/food-list :: foodList}"></div>
+    </main>
+
+    <!-- Include Footer -->
+    <div th:replace="~{layout/footer :: footer}"></div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script Tương tác Trang Chủ -->
+    <script>
+        function selectCategory(id, name) {
+            document.getElementById('selectedCategoryIdInput').value = id;
+            document.getElementById('selectedCategoryText').innerText = name;
+        }
+
+        function scrollCategorySlider(direction) {
+            const container = document.getElementById('categoryScrollBox');
+            if (container) {
+                const scrollAmount = 240;
+                container.scrollBy({
+                    left: direction * scrollAmount,
+                    behavior: 'smooth'
+                });
+                setTimeout(updateCategorySliderNav, 320);
+            }
+        }
+
+        function updateCategorySliderNav() {
+            const container = document.getElementById('categoryScrollBox');
+            const prevBtn = document.getElementById('catSliderPrevBtn');
+            const nextBtn = document.getElementById('catSliderNextBtn');
+            if (container && prevBtn && nextBtn) {
+                const isOverflowing = container.scrollWidth > container.clientWidth + 5;
+                if (!isOverflowing) {
+                    // Nếu ít item, ẩn bớt nút cuộn hoặc vô hiệu hóa để không bị vướng
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                } else {
+                    prevBtn.style.display = 'flex';
+                    nextBtn.style.display = 'flex';
+                    prevBtn.style.opacity = container.scrollLeft <= 5 ? '0.5' : '1';
+                    prevBtn.disabled = container.scrollLeft <= 5;
+                    const isEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 5;
+                    nextBtn.style.opacity = isEnd ? '0.5' : '1';
+                    nextBtn.disabled = isEnd;
+                }
+            }
+        }
+
+        window.addEventListener('load', updateCategorySliderNav);
+        window.addEventListener('resize', updateCategorySliderNav);
+        document.getElementById('categoryScrollBox')?.addEventListener('scroll', updateCategorySliderNav);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông Tin Cá Nhân - MealChoice</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: none; border-radius: 1rem; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+        .btn-danger { background-color: #e23744; border-color: #e23744; }
+        .btn-danger:hover { background-color: #d02b37; border-color: #d02b37; }
+        .form-control:disabled, .form-select:disabled { background-color: #f8f9fa; color: #212529; opacity: 0.9; }
+        .form-check-input:disabled ~ .form-check-label { opacity: 1; color: #212529; font-weight: 500; }
+        .form-check-input:disabled:checked { background-color: #0d6efd; border-color: #0d6efd; opacity: 1; }
+    </style>
+</head>
+<body>
+
+<!-- Include Navbar -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="container py-4">
+    <!-- Page Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3 bg-white p-4 rounded-4 shadow-sm">
+        <div>
+            <h1 class="h3 fw-bold mb-1">🙋‍♂️ Thông Tin Cá Nhân</h1>
+            <p class="text-muted mb-0">Quản lý thông tin tài khoản và địa chỉ giao hàng của bạn</p>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <div class="row g-4">
+        <!-- Profile Information Card -->
+        <div class="col-12">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h5 fw-bold mb-0 text-dark">
+                        <i class="bi bi-person-lines-fill me-2 text-danger"></i>Thông Tin Tài Khoản
+                    </h2>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="editProfile()">
+                        <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+                    </button>
+                </div>
+
+                <form id="profileForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="displayName" class="form-label fw-semibold">
+                                Họ và Tên <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control rounded-3" id="displayName" name="displayName" required disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="email" class="form-label fw-semibold mb-0">Email</label>
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">Không thể sửa</span>
+                            </div>
+                            <input type="email" class="form-control rounded-3" id="email" name="email" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label for="phoneNumber" class="form-label fw-semibold mb-0">Số điện thoại</label>
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill">Không thể sửa</span>
+                            </div>
+                            <input type="tel" class="form-control rounded-3" id="phoneNumber" name="phoneNumber" disabled>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="dob" class="form-label fw-semibold">Ngày sinh</label>
+                            <input type="date" class="form-control rounded-3" id="dob" name="dob" disabled>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold d-block">Giới tính</label>
+                            <div class="d-flex gap-4 pt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderMale" value="MALE" disabled>
+                                    <label class="form-check-label" for="genderMale">
+                                        Nam
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="FEMALE" disabled>
+                                    <label class="form-check-label" for="genderFemale">
+                                        Nữ
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="genderOther" value="OTHER" disabled>
+                                    <label class="form-check-label" for="genderOther">
+                                        Khác
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 mt-4" id="profileActions" style="display: none;">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-success rounded-pill px-4">
+                                    <i class="bi bi-check-lg me-1"></i> Lưu thay đổi
+                                </button>
+                                <button type="button" class="btn btn-light border rounded-pill px-4" onclick="cancelEdit()">
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Addresses Card -->
+        <div class="col-12">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h5 fw-bold mb-0 text-dark">
+                        <i class="bi bi-geo-alt-fill me-2 text-danger"></i>Địa Chỉ Giao Hàng
+                    </h2>
+                    <button type="button" class="btn btn-sm btn-danger rounded-pill px-3" onclick="openAddressModal()">
+                        <i class="bi bi-plus-lg me-1"></i> Thêm địa chỉ mới
+                    </button>
+                </div>
+
+                <div id="addressList" class="row g-3">
+                    <!-- Addresses will be loaded here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Bootstrap Modal for Address -->
+<div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold" id="modalTitle">
+                    <i class="bi bi-house-add me-2 text-danger"></i>Thêm Địa Chỉ Mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <form id="addressForm" onsubmit="event.preventDefault(); submitAddressForm();">
+                <div class="modal-body">
+                    <input type="hidden" id="addressId" name="id">
+
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="fw-bold text-danger mb-0"><i class="bi bi-telephone me-2"></i>Thông tin liên hệ</h6>
+                        <span id="contactNotice" class="badge bg-secondary-subtle text-secondary rounded-pill d-none">Không được phép sửa liên hệ</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contactName" class="form-label small fw-semibold">
+                            Tên người nhận <span class="text-danger">*</span>
+                        </label>
+                        <!-- Khôi phục autocomplete để trình duyệt gợi ý tên cũ khi thêm mới -->
+                        <input type="text" class="form-control rounded-3" id="contactName" name="contactName" required placeholder="Ví dụ: Nguyễn Văn A" autocomplete="name">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="contactPhone" class="form-label small fw-semibold">
+                            Số điện thoại <span class="text-danger">*</span>
+                        </label>
+                        <!-- Khôi phục autocomplete sđt -->
+                        <input type="tel" class="form-control rounded-3" id="contactPhone" name="contactPhone" required placeholder="Ví dụ: 0912345678" pattern="^(0|\+84)[0-9]{9}$" autocomplete="tel">
+                    </div>
+
+                    <h6 class="fw-bold text-danger my-3"><i class="bi bi-pin-map me-2"></i>Địa chỉ</h6>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <label for="city" class="form-label small fw-semibold">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="city" name="city" required>
+                                <option value="" selected disabled>Tỉnh/Thành phố</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="district" class="form-label small fw-semibold">Quận/Huyện <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="district" name="district" required disabled>
+                                <option value="" selected disabled>Quận/Huyện</option>
+                            </select>
+                        </div>
+                        <div class="col-4">
+                            <label for="ward" class="form-label small fw-semibold">Phường/Xã <span class="text-danger">*</span></label>
+                            <select class="form-select rounded-3" id="ward" name="ward" required disabled>
+                                <option value="" selected disabled>Phường/Xã</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-size-13 text-secondary">Địa chỉ chi tiết (Số nhà, tên đường...) <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="street" required placeholder="Ví dụ: Số 123 Đường Cầu Giấy">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label font-size-13 text-secondary">Ghi chú giao hàng</label>
+                        <input type="text" class="form-control" id="note" placeholder="Ví dụ: Gọi trước khi đến, giao giờ hành chính...">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="isDefault">
+                        <label class="form-check-label font-size-14 text-dark" for="isDefault">
+                            Đặt làm địa chỉ mặc định
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" id="btnSaveAddressModal" class="btn btn-danger rounded-pill px-4" onclick="submitAddressForm()">Lưu địa chỉ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Include Footer -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/user-profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!-- Fragment 8 Món Ăn Gợi Ý Gần Khách Hàng Nhất -->
+<section th:fragment="suggestedFoods" th:if="${foodPage == null or foodPage.number == 0}" class="suggested-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+    <div class="container">
+        <!-- Section Header -->
+        <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2.5 py-1 fs-8 fw-bold">
+                        <i class="bi bi-geo-alt-fill me-1"></i>Vị trí của bạn
+                    </span>
+                </div>
+                <h3 class="fw-bold text-dark mb-0">Gợi ý món ngon gần bạn</h3>
+                <p class="text-muted fs-8 mb-0 mt-1">Được lựa chọn dựa trên địa chỉ giao hàng và sở thích của bạn</p>
+            </div>
+
+            <!-- Chuyển href -> th:href -->
+            <a th:href="@{/restaurants/near-you}" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1.5 fw-semibold d-flex align-items-center gap-1">
+                <span>Xem tất cả</span>
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <!-- Foods Grid (8 Items - 4 Cột x 2 Hàng) -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <th:block th:if="${suggestedFoods != null and !#lists.isEmpty(suggestedFoods)}">
+                <th:block th:each="food : ${suggestedFoods}">
+                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                </th:block>
+            </th:block>
+
+            <div th:if="${suggestedFoods == null or #lists.isEmpty(suggestedFoods)}" class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-shop fs-1 d-block mb-2 text-secondary"></i>
+                <p class="mb-0">Đang cập nhật các món ăn gợi ý gần bạn...</p>
+            </div>
+        </div>
+    </div>
+</section>

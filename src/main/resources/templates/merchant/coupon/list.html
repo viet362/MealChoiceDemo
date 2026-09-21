@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Coupon - Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+
+<body class="merchant-page">
+
+<div th:replace="~{merchant/layout :: shell('Quản lý Coupon', 'coupons', ~{::content})}">
+
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <div class="merchant-toolbar d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    <i class="bi bi-ticket-perforated me-2 text-danger"></i>
+                    Quản lý Coupon
+                </h4>
+                <p class="text-muted mb-0">
+                    Quản lý các mã giảm giá của cửa hàng.
+                </p>
+            </div>
+
+            <a th:href="@{/merchant/coupons/create}" class="btn btn-danger">
+                <i class="bi bi-plus-lg me-1"></i>Thêm coupon
+            </a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success mb-0">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}"></span>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <div class="merchant-panel">
+
+            <div th:if="${#lists.isEmpty(coupons)}" class="text-center py-5">
+                <i class="bi bi-ticket-perforated text-muted fs-1"></i>
+                <h5 class="fw-bold mt-3">Chưa có coupon</h5>
+                <p class="text-muted mb-3">
+                    Hãy tạo coupon đầu tiên cho cửa hàng.
+                </p>
+
+                <a th:href="@{/merchant/coupons/create}" class="btn btn-danger">
+                    <i class="bi bi-plus-lg me-1"></i>Thêm coupon
+                </a>
+            </div>
+
+            <div th:unless="${#lists.isEmpty(coupons)}" class="table-responsive">
+                <table class="merchant-table table mb-0">
+                    <thead>
+                    <tr>
+                        <th>Mã coupon</th>
+                        <th>Loại giảm</th>
+                        <th>Giá trị</th>
+                        <th>Thời gian</th>
+                        <th>Lượt sử dụng</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="coupon : ${coupons}">
+
+                        <td class="fw-bold" th:text="${coupon.couponCode}">
+                            COUPON20
+                        </td>
+
+                        <td>
+                            <span th:if="${coupon.discountType.name() == 'PERCENT'}"
+                                  class="badge bg-danger-subtle text-danger">
+                                Giảm theo %
+                            </span>
+
+                            <span th:unless="${coupon.discountType.name() == 'PERCENT'}"
+                                  class="badge bg-warning-subtle text-warning-emphasis">
+                                Giảm trực tiếp
+                            </span>
+                        </td>
+
+                        <td>
+                            <strong th:text="${coupon.discountValue}">20</strong>
+                            <span th:text="${coupon.discountType.name() == 'PERCENT' ? '%' : 'VNĐ'}">
+                                %
+                            </span>
+                        </td>
+
+                        <td class="small">
+                            <div>
+                                <i class="bi bi-calendar-event me-1"></i>
+                                <span th:text="${coupon.startAt != null
+                                    ? #temporals.format(coupon.startAt, 'dd/MM/yyyy HH:mm')
+                                    : 'Không giới hạn'}">
+                                    Không giới hạn
+                                </span>
+                            </div>
+
+                            <div class="text-muted">
+                                đến
+                                <span th:text="${coupon.endAt != null
+                                    ? #temporals.format(coupon.endAt, 'dd/MM/yyyy HH:mm')
+                                    : 'Không giới hạn'}">
+                                    Không giới hạn
+                                </span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <span th:text="${coupon.usedCount ?: 0}">0</span>
+
+                            <span th:if="${coupon.usageLimit != null}">
+                                / <span th:text="${coupon.usageLimit}">100</span>
+                            </span>
+
+                            <span th:unless="${coupon.usageLimit != null}"
+                                  class="text-muted">
+                                / Không giới hạn
+                            </span>
+                        </td>
+
+                        <td>
+                            <span th:if="${coupon.isActive}"
+                                  class="badge bg-success-subtle text-success">
+                                <i class="bi bi-check-circle me-1"></i>Hoạt động
+                            </span>
+
+                            <span th:unless="${coupon.isActive}"
+                                  class="badge bg-secondary-subtle text-secondary">
+                                <i class="bi bi-x-circle me-1"></i>Tắt
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="d-flex justify-content-end gap-2">
+                                <a th:href="@{/merchant/coupons/{id}(id=${coupon.id})}"
+                                   class="btn btn-outline-primary btn-sm"
+                                   title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <a th:href="@{/merchant/coupons/{id}/edit(id=${coupon.id})}"
+                                   class="btn btn-outline-secondary btn-sm"
+                                   title="Sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+
+                                <form th:action="@{/merchant/coupons/{id}/delete(id=${coupon.id})}"
+                                      method="post"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa coupon này?');">
+                                    <button type="submit"
+                                            class="btn btn-outline-danger btn-sm"
+                                            title="Xóa">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </section>
+</div>
+<script th:src="@{/js/coupon.js}"></script>
+</body>
+</html>

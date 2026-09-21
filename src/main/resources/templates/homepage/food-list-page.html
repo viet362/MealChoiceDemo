@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle != null ? pageTitle + ' - MealChoice' : 'Danh Sách Món Ăn - MealChoice'}">Danh Sách Món Ăn - MealChoice</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Food List Custom CSS -->
+    <link rel="stylesheet" th:href="@{/css/food-list.css}">
+</head>
+
+<body>
+
+<!-- Include Navbar -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<main class="py-4">
+    <div class="container">
+        <!-- Header Title -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb fs-8">
+                    <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+                    <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page" th:text="${pageTitle}">Danh sách món ăn</li>
+                </ol>
+            </nav>
+            <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+                <div>
+                    <h2 class="fw-bold text-dark mb-1" th:text="${pageTitle}">Danh Sách Món Ăn</h2>
+                    <p class="text-muted fs-8 mb-0" th:text="${pageDescription}">Khám phá danh sách các món ăn hấp dẫn</p>
+                </div>
+                <div class="text-muted fs-8" th:if="${foodPage != null}">
+                    Tìm thấy <span class="fw-bold text-danger" th:text="${foodPage.totalElements}">0</span> món ăn
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Box Trên Trang Danh Sách -->
+        <div class="mb-4">
+            <form th:action="@{${currentUrl}}" method="GET" class="d-flex gap-2" style="max-width: 540px;">
+                <input type="hidden" name="categoryId" th:value="${selectedCategoryId}" th:if="${selectedCategoryId != null}">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden border">
+                        <span class="input-group-text bg-white border-0 ps-3 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                    <input type="text" name="keyword" th:value="${keyword}"
+                           class="form-control border-0 shadow-none px-2"
+                           placeholder="Tìm kiếm món ăn, tên quán...">
+                    <button type="submit" class="btn btn-danger px-4 fw-semibold">Tìm</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filter Bar (Categories Filter Buttons) -->
+        <div class="d-flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
+            <a th:href="@{${currentUrl}(keyword=${keyword})}"
+               class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0"
+               th:classappend="${selectedCategoryId == null} ? 'btn-danger text-white' : 'btn-outline-secondary'">
+                Tất cả danh mục
+            </a>
+            <th:block th:each="cat : ${categories}">
+                <a th:href="@{${currentUrl}(categoryId=${cat.id}, keyword=${keyword})}"
+                   class="btn btn-sm rounded-pill px-3 py-1.5 fw-semibold flex-shrink-0"
+                   th:classappend="${selectedCategoryId != null and selectedCategoryId == cat.id} ? 'btn-danger text-white' : 'btn-outline-secondary'"
+                   th:text="${cat.categoryName}">
+                    Danh mục
+                </a>
+            </th:block>
+        </div>
+
+        <!-- Food Grid (50 Items / Page) -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="foodResultsGrid">
+            <th:block th:if="${foodPage != null and !foodPage.isEmpty()}">
+                <th:block th:each="food : ${foodPage.content}">
+                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                </th:block>
+            </th:block>
+
+            <!-- Empty State -->
+            <div th:if="${foodPage == null or foodPage.isEmpty()}" class="col-12 text-center py-5">
+                <div class="p-5 bg-white rounded-4 shadow-sm border border-light-subtle max-w-md mx-auto" style="max-width: 480px;">
+                    <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
+                    <h5 class="fw-bold text-dark mb-2">Không tìm thấy món ăn nào</h5>
+                    <p class="text-muted fs-8 mb-4">Hãy thử tìm kiếm với từ khóa khác hoặc chọn danh mục món ăn khác nhé!</p>
+                    <a href="/" class="btn btn-danger btn-sm rounded-pill px-4 py-2 fw-semibold">
+                        <i class="bi bi-arrow-left me-1"></i> Quay về Trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav th:if="${foodPage != null and foodPage.totalPages > 1}" class="d-flex justify-content-center mt-5" aria-label="Food search pagination">
+            <ul class="pagination pagination-md shadow-sm rounded-pill overflow-hidden border-0">
+                <li class="page-item" th:classappend="${foodPage.first} ? 'disabled'">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${foodPage.number - 1}, categoryId=${selectedCategoryId}, keyword=${keyword})}" aria-label="Previous">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                <li class="page-item" th:each="pageNum : ${#numbers.sequence(0, foodPage.totalPages - 1)}"
+                    th:classappend="${pageNum == foodPage.number} ? 'active'">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${pageNum}, categoryId=${selectedCategoryId}, keyword=${keyword})}" th:text="${pageNum + 1}">1</a>
+                </li>
+
+                <li class="page-item" th:classappend="${foodPage.last} ? 'disabled'">
+                    <a class="page-link px-3" th:href="@{${currentUrl}(page=${foodPage.number + 1}, categoryId=${selectedCategoryId}, keyword=${keyword})}" aria-label="Next">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</main>
+
+<!-- Include Footer -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

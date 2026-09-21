@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đối soát doanh thu - Merchant</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+
+    <style>
+        .settlement-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .settlement-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -4px rgba(15, 23, 42, 0.08);
+        }
+
+        .icon-box-settlement {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.35rem;
+        }
+
+        .table-settlement {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .table-settlement tbody tr {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            border-radius: 12px;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+
+        .table-settlement tbody tr:hover {
+            background: #f8fafc;
+            transform: scale(1.002);
+        }
+
+        .table-settlement td,
+        .table-settlement th {
+            padding: 14px 16px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .table-settlement thead th {
+            background: #f8fafc;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #64748b;
+        }
+
+        .sticky-footer-bar {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.1);
+            padding: 16px 24px;
+        }
+
+        .formula-callout {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left: 4px solid #f59e0b;
+            border-radius: 12px;
+            padding: 12px 18px;
+        }
+
+        .dispute-alert {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #ef4444;
+            border-radius: 12px;
+            padding: 14px 20px;
+        }
+
+        .badge-pill-custom {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body class="merchant-page">
+
+    <div th:replace="~{merchant/layout :: shell('Đối soát doanh thu', 'settlement', ~{::content})}">
+
+        <section th:fragment="content" class="d-flex flex-column gap-4 pb-4">
+
+            <!-- Header & Toolbar -->
+            <div class="merchant-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-calculator text-danger"></i>
+                        <span>Đối soát doanh thu & Dòng tiền</span>
+                    </h4>
+                    <p class="text-muted mb-0 small">
+                        Kiểm tra chi tiết doanh số, các khoản giảm trừ và xác nhận quyết toán định kỳ của cửa hàng.
+                    </p>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <!-- Chọn loại kỳ: Tháng hoặc Tuần -->
+                    <div class="btn-group btn-group-sm rounded-pill p-1 bg-light border shadow-sm" role="group">
+                        <button type="button" id="btnPeriodTypeMonth"
+                            class="btn btn-sm rounded-pill fw-semibold px-3 active btn-danger text-white"
+                            onclick="switchPeriodType('MONTH')">
+                            <i class="bi bi-calendar-month me-1"></i>Theo Tháng
+                        </button>
+                        <button type="button" id="btnPeriodTypeWeek"
+                            class="btn btn-sm rounded-pill fw-semibold px-3 text-muted"
+                            onclick="switchPeriodType('WEEK')">
+                            <i class="bi bi-calendar-week me-1"></i>Theo Tuần
+                        </button>
+                    </div>
+
+                    <!-- Chọn kỳ đối soát -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="periodSelect" class="text-muted small fw-semibold text-nowrap">
+                            <i class="bi bi-calendar3 me-1"></i>Kỳ đối soát:
+                        </label>
+                        <select id="periodSelect"
+                            class="form-select form-select-sm rounded-pill px-3 shadow-sm fw-semibold"
+                            style="min-width: 170px;">
+                            <option value="">Đang tải danh sách kỳ...</option>
+                        </select>
+                    </div>
+
+                    <!-- Nút Làm mới -->
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm"
+                        onclick="loadSettlementData()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Làm mới
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formula Callout & In-Progress Alert -->
+            <div class="d-flex flex-column gap-2.5">
+                <div class="formula-callout d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-info-circle-fill text-warning fs-5"></i>
+                        <div class="small">
+                            <strong>Công thức đối soát:</strong>
+                            <span class="text-dark">Doanh thu thực nhận = Giá sản phẩm - Khuyến mãi - Chiết khấu
+                                sàn</span>
+                        </div>
+                    </div>
+                    <div class="badge bg-white text-dark border shadow-sm px-2.5 py-1.5 small">
+                        Chiết khấu: <strong>0.001%</strong> (&lt;200tr) | <strong>0.0005%</strong> (&ge;200tr)
+                    </div>
+                </div>
+
+                <!-- In-Progress Notice Box (Chỉ hiện khi kỳ đang diễn ra) -->
+                <div id="inProgressNoticeBox"
+                    class="alert alert-info border-start border-info border-4 rounded-4 shadow-sm p-3 mb-0 d-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle p-2 bg-info bg-opacity-25 text-info fs-5 flex-shrink-0">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="flex-grow-1 small">
+                            <strong class="text-dark">Kỳ đối soát này hiện đang diễn ra (chưa kết thúc kỳ).</strong>
+                            <div class="text-secondary mt-0.5">
+                                Doanh thu và danh sách đơn hàng đang được cập nhật tạm tính liên tục theo thời gian
+                                thực.
+                                Bạn sẽ có thể <strong>Xác nhận</strong> hoặc <strong>Khiếu nại</strong> sau khi kỳ kết
+                                thúc vào lúc <span id="inProgressEndTimeText" class="fw-semibold text-dark"></span>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overlap Notice Box (Chống trùng lặp đối soát Tuần & Tháng) -->
+                <div id="overlapNoticeBox"
+                    class="alert alert-warning border-start border-warning border-4 rounded-4 shadow-sm p-3 mb-0 d-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle p-2 bg-warning bg-opacity-25 text-warning-emphasis fs-5 flex-shrink-0">
+                            <i class="bi bi-shield-exclamation"></i>
+                        </div>
+                        <div class="flex-grow-1 small">
+                            <strong class="text-dark">Lưu ý chống trùng lặp dòng tiền (Anti-Double-Settlement):</strong>
+                            <div class="text-secondary mt-0.5" id="overlapMessageText">
+                                Kỳ đối soát này có khoảng thời gian đã được xác nhận chốt tiền ở kỳ khác. Kỳ này chỉ dùng để xem báo cáo thống kê và không thể chốt số.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 Thẻ chỉ số tài chính (Cards) -->
+            <div class="row g-3">
+                <!-- 1. Tổng doanh số món -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="settlement-card p-3 d-flex align-items-center h-100">
+                        <div class="icon-box-settlement me-3" style="background: #e0f2fe; color: #0284c7;">
+                            <i class="bi bi-bag-check-fill"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium">Tổng doanh số món</span>
+                            <h4 class="fw-bold mb-0 mt-1 text-dark" id="cardGrossRevenue">0 ₫</h4>
+                            <small class="text-muted font-size-12" id="cardTotalOrders">0 đơn hoàn thành</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Tổng khuyến mãi -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="settlement-card p-3 d-flex align-items-center h-100">
+                        <div class="icon-box-settlement me-3" style="background: #fef3c7; color: #d97706;">
+                            <i class="bi bi-tags-fill"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium">Khuyến mãi / Giảm giá</span>
+                            <h4 class="fw-bold mb-0 mt-1 text-warning-emphasis" id="cardTotalDiscount">0 ₫</h4>
+                            <small class="text-muted font-size-12">Mã voucher & ưu đãi</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Phí chiết khấu sàn -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="settlement-card p-3 d-flex align-items-center h-100">
+                        <div class="icon-box-settlement me-3" style="background: #f3e8ff; color: #7e22ce;">
+                            <i class="bi bi-percent"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-1.5">
+                                <span class="text-muted small fw-medium">Phí chiết khấu sàn</span>
+                                <span class="badge bg-purple-subtle text-purple font-size-11"
+                                    id="cardCommissionRateBadge"
+                                    style="background: #f3e8ff; color: #7e22ce;">0.001%</span>
+                            </div>
+                            <h4 class="fw-bold mb-0 mt-1 text-purple" id="cardCommissionFee" style="color: #7e22ce;">0 ₫
+                            </h4>
+                            <small class="text-muted font-size-12">Phí dịch vụ nền tảng</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Doanh thu thực nhận -->
+                <div class="col-12 col-sm-6 col-xl-3">
+                    <div class="settlement-card p-3 d-flex align-items-center h-100"
+                        style="border-left: 4px solid #16a34a;">
+                        <div class="icon-box-settlement me-3" style="background: #dcfce7; color: #15803d;">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium">Doanh thu thực nhận</span>
+                            <h4 class="fw-bold mb-0 mt-1 text-success fs-4" id="cardNetRevenue">0 ₫</h4>
+                            <small class="text-success fw-medium font-size-12 d-block">Số tiền được thanh toán</small>
+                            <div id="cardAdjustmentInfo" class="mt-1 font-size-11 text-muted d-none">
+                                <span>Gốc: <strong id="cardOriginalNetRevenue">0 ₫</strong></span>
+                                <span class="badge bg-success-subtle text-success px-1.5 py-0.5 ms-1"
+                                    id="cardAdjustmentBadge"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng danh sách chi tiết đơn hàng trong kỳ -->
+            <div class="settlement-card p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-receipt-cutoff text-danger"></i>
+                            <span>Chi tiết các đơn hàng hoàn thành trong kỳ</span>
+                        </h5>
+                        <p class="text-muted small mb-0">
+                            Chỉ các đơn hàng ở trạng thái Hoàn thành mới được đưa vào kỳ đối soát.
+                        </p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-pill-custom" id="currentPeriodStatusBadge">Chờ xác nhận</span>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-settlement mb-0">
+                        <thead>
+                            <tr>
+                                <th class="text-center" style="width: 50px;">STT</th>
+                                <th>MÃ ĐƠN HÀNG</th>
+                                <th>THỜI GIAN ĐẶT</th>
+                                <th>KHÁCH HÀNG</th>
+                                <th class="text-end">GIÁ SẢN PHẨM</th>
+                                <th class="text-end">KHUYẾN MÃI</th>
+                                <th class="text-end">PHÍ SÀN</th>
+                                <th class="text-end">THỰC NHẬN</th>
+                                <th class="text-center">TRẠNG THÁI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="settlementOrdersTableBody">
+                            <tr>
+                                <td colspan="9" class="text-center py-5 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-danger me-2" role="status"></div>
+                                    Đang tải dữ liệu đối soát...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State Container -->
+                <div id="emptyOrdersState" class="text-center py-5 d-none">
+                    <i class="bi bi-inbox text-muted display-4 d-block mb-3 opacity-50"></i>
+                    <h6 class="fw-bold text-dark">Chưa có đơn hàng hoàn thành trong kỳ này</h6>
+                    <p class="text-muted small mb-0">Khi có đơn hàng hoàn tất, số liệu quyết toán sẽ tự động được hiển
+                        thị tại đây.</p>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- THÔNG BÁO XỬ LÝ KHIẾU NẠI (Chỉ hiển thị ở cuối trang của kỳ có khiếu nại) -->
+            <!-- ================================================================= -->
+            <!-- 1. Khiếu nại đang chờ xử lý (PENDING) -->
+            <div id="disputeAlertBox" class="dispute-alert mb-4 d-none">
+                <div class="d-flex align-items-start gap-3">
+                    <i class="bi bi-exclamation-octagon-fill text-danger fs-4 mt-0.5"></i>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+                            <h6 class="fw-bold text-danger mb-0">
+                                Kỳ đối soát <span id="disputePeriodLabel" class="text-dark"></span> đang trong quá trình
+                                khiếu nại
+                            </h6>
+                            <span class="small text-muted" id="claimCreatedAtText"></span>
+                        </div>
+                        <p class="mb-1 small text-dark">
+                            <strong>Lý do:</strong> <span id="claimReasonText"></span>
+                        </p>
+                        <p class="mb-1 small text-muted">
+                            <strong>Mô tả:</strong> <span id="claimDescriptionText"></span>
+                        </p>
+                        <div id="claimEvidenceLinkContainer" class="mt-2 d-none">
+                            <a id="claimEvidenceLink" href="#" target="_blank"
+                                class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                <i class="bi bi-image me-1"></i>Xem ảnh chứng từ đính kèm
+                            </a>
+                        </div>
+                        <small class="d-block mt-2 text-danger fst-italic">
+                            * Luồng chuyển tiền payout cho kỳ này tạm khóa để Admin tra soát số liệu.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Khiếu nại bị Admin TỪ CHỐI (REJECTED) -->
+            <div id="claimRejectedAlertBox"
+                class="alert alert-warning border-start border-warning border-4 rounded-4 shadow-sm p-3.5 mb-4 d-none">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle p-2 bg-warning bg-opacity-25 text-warning-emphasis fs-4 flex-shrink-0">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                            <span>Admin đã phản hồi từ chối khiếu nại kỳ <span id="rejectedClaimPeriodLabel"
+                                    class="text-danger"></span></span>
+                            <span class="badge bg-danger rounded-pill">Đã từ chối</span>
+                        </h6>
+                        <p class="small text-muted mb-2">
+                            Khiếu nại về <strong><span id="rejectedClaimReason"></span></strong> đã được Admin xem xét
+                            và phản hồi:
+                        </p>
+                        <div class="p-3 bg-white rounded-3 border border-warning-subtle mb-2">
+                            <div class="small fw-semibold text-dark mb-1"><i
+                                    class="bi bi-chat-quote-fill text-warning me-1"></i>Ghi chú giải trình từ Admin:
+                            </div>
+                            <div class="small text-dark fst-italic" id="rejectedAdminNoteText">Chưa có ghi chú</div>
+                        </div>
+                        <small class="text-secondary d-block">
+                            👉 Bạn hãy kiểm tra lại bảng đơn hàng. Nếu đồng ý với giải trình, vui lòng bấm <strong>"Xác
+                                nhận đối soát"</strong> bên dưới để chốt số hoặc gửi khiếu nại mới nếu vẫn còn vướng
+                            mắc.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Khiếu nại được Admin CHẤP THUẬN (RESOLVED) -->
+            <div id="claimResolvedAlertBox"
+                class="alert alert-success border-start border-success border-4 rounded-4 shadow-sm p-3.5 mb-4 d-none">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle p-2 bg-success bg-opacity-25 text-success fs-4 flex-shrink-0">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="fw-bold text-success mb-1 d-flex align-items-center gap-2">
+                            <span>Khiếu nại kỳ <span id="resolvedClaimPeriodLabel" class="text-dark"></span> đã được
+                                Admin chấp thuận</span>
+                            <span class="badge bg-success rounded-pill">Đã duyệt</span>
+                        </h6>
+                        <div class="p-3 bg-white rounded-3 border border-success-subtle mt-2 mb-1">
+                            <div class="small fw-semibold text-dark mb-1"><i
+                                    class="bi bi-shield-check text-success me-1"></i>Ý kiến xử lý từ Admin:</div>
+                            <div class="small text-dark" id="resolvedAdminNoteText">Admin đã xác minh và chấp thuận
+                                khiếu nại.</div>
+                        </div>
+                        <small class="text-success fw-medium">
+                            * Kỳ đối soát này đã được xác nhận hoàn tất để chuẩn bị lệnh chi trả tiền (Payout).
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Footer Action Bar -->
+            <div class="sticky-footer-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div>
+                        <span class="text-muted small d-block">Trạng thái quyết toán:</span>
+                        <span class="fw-bold text-dark" id="footerStatusText">Đang tải...</span>
+                    </div>
+                    <div class="border-start ps-3 d-none" id="confirmedTimeBox">
+                        <span class="text-muted small d-block">Thời gian xác nhận:</span>
+                        <span class="small fw-semibold text-success" id="confirmedTimeText"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2.5">
+                    <!-- Nút Khiếu nại -->
+                    <button type="button" id="btnOpenClaimModal"
+                        class="btn btn-outline-danger rounded-pill px-4 fw-semibold d-flex align-items-center gap-2 shadow-sm"
+                        onclick="openClaimModal()">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Khiếu nại</span>
+                    </button>
+
+                    <!-- Nút Xác nhận đối soát -->
+                    <button type="button" id="btnOpenConfirmModal"
+                        class="btn btn-danger rounded-pill px-4 fw-bold d-flex align-items-center gap-2 shadow-sm"
+                        onclick="openConfirmModal()">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Xác nhận đối soát</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MODAL 1: XÁC NHẬN ĐỐI SOÁT (CONFIRM MODAL) -->
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold text-dark" id="confirmModalLabel">
+                                <i class="bi bi-check2-circle text-success me-2 fs-4 align-middle"></i>
+                                Xác nhận đối soát doanh thu
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body py-4">
+                            <p class="text-muted small mb-3">
+                                Vui lòng kiểm tra lại tổng quan số liệu tài chính trước khi chốt số đối soát cho <strong
+                                    id="confirmModalPeriodLabel"></strong>:
+                            </p>
+
+                            <div class="bg-light p-3.5 rounded-3 mb-3">
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Tổng doanh số món:</span>
+                                    <strong class="text-dark" id="confirmModalGross">0 ₫</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Tổng khuyến mãi:</span>
+                                    <strong class="text-warning-emphasis" id="confirmModalDiscount">0 ₫</strong>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small">
+                                    <span class="text-muted">Phí chiết khấu sàn:</span>
+                                    <strong class="text-purple" id="confirmModalFee" style="color: #7e22ce;">0
+                                        ₫</strong>
+                                </div>
+                                <hr class="my-2 border-secondary-subtle">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-dark">Thực nhận chuyển khoản:</span>
+                                    <span class="fw-bold text-success fs-5" id="confirmModalNet">0 ₫</span>
+                                </div>
+                            </div>
+
+                            <div
+                                class="alert alert-success py-2.5 px-3 rounded-3 small mb-0 d-flex gap-2 align-items-center">
+                                <i class="bi bi-wallet2 text-success fs-5"></i>
+                                <span>Sau khi xác nhận chốt số, doanh thu thực nhận sẽ được <strong>cộng ngay vào Số dư
+                                        khả dụng</strong> của quán. Bạn có thể vào mục <strong>Rút tiền</strong> để yêu
+                                    cầu sàn chuyển khoản bất cứ lúc nào.</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy
+                                bỏ</button>
+                            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold"
+                                id="btnSubmitConfirm" onclick="submitConfirmSettlement()">
+                                <span class="spinner-border spinner-border-sm d-none me-1" id="confirmSpinner"></span>
+                                Xác nhận chốt số
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL 2: KHIẾU NẠI ĐỐI SOÁT (CLAIM / DISPUTE MODAL) -->
+            <div class="modal fade" id="claimModal" tabindex="-1" aria-labelledby="claimModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold text-dark" id="claimModalLabel">
+                                <i class="bi bi-exclamation-triangle-fill text-danger me-2 fs-4 align-middle"></i>
+                                Gửi khiếu nại đối soát
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="claimForm" onsubmit="submitClaimSettlement(event)">
+                            <div class="modal-body py-4">
+                                <p class="text-muted small mb-3">
+                                    Nếu bạn phát hiện sai lệch về chiết khấu sàn, khuyến mãi hoặc thiếu đơn hàng trong
+                                    <strong id="claimModalPeriodLabel"></strong>, vui lòng gửi phản hồi để Admin tra
+                                    soát.
+                                </p>
+
+                                <!-- Lý do khiếu nại -->
+                                <div class="mb-3">
+                                    <label for="claimReasonSelect" class="form-label small fw-bold text-dark">
+                                        Lý do khiếu nại <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="form-select rounded-3 shadow-none" id="claimReasonSelect" required>
+                                        <option value="">-- Chọn lý do khiếu nại --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Mô tả chi tiết -->
+                                <div class="mb-3">
+                                    <label for="claimDescriptionInput" class="form-label small fw-bold text-dark">
+                                        Mô tả chi tiết sự cố <span class="text-danger">*</span>
+                                    </label>
+                                    <textarea class="form-control rounded-3 shadow-none" id="claimDescriptionInput"
+                                        rows="3"
+                                        placeholder="Ví dụ: Đơn hàng #ORD1234 bị tính sai tỷ lệ chiết khấu, số tiền chênh lệch khoảng..."
+                                        required></textarea>
+                                </div>
+
+                                <!-- Upload ảnh bằng chứng -->
+                                <div class="mb-3">
+                                    <label for="claimEvidenceInput" class="form-label small fw-bold text-dark">
+                                        Ảnh chứng từ / Hóa đơn đính kèm (tùy chọn)
+                                    </label>
+                                    <input class="form-control rounded-3 shadow-none" type="file"
+                                        id="claimEvidenceInput" accept="image/*" onchange="previewClaimImage(event)">
+                                    <small class="text-muted font-size-12 d-block mt-1">Định dạng hỗ trợ: JPG, PNG,
+                                        WEBP. Tối đa 5MB.</small>
+
+                                    <!-- Preview container -->
+                                    <div id="imagePreviewBox" class="mt-2 d-none">
+                                        <img id="imagePreviewElement" src="" alt="Preview"
+                                            class="img-fluid rounded-3 border" style="max-height: 150px;">
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="alert alert-danger py-2.5 px-3 rounded-3 small mb-0 d-flex gap-2 align-items-center">
+                                    <i class="bi bi-info-circle-fill text-danger fs-5"></i>
+                                    <span>Kỳ đối soát sẽ chuyển sang trạng thái <strong>Đang khiếu nại</strong> và tạm
+                                        dừng lệnh chuyển tiền cho đến khi được Admin giải quyết.</span>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-light rounded-pill px-4"
+                                    data-bs-dismiss="modal">Đóng</button>
+                                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold"
+                                    id="btnSubmitClaim">
+                                    <span class="spinner-border spinner-border-sm d-none me-1" id="claimSpinner"></span>
+                                    Gửi khiếu nại
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <script th:src="@{/js/merchant-settlement.js}"></script>
+
+        </section>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+<!-- Promo Nổi Bật -->
+<section th:fragment="promoCards" th:if="${foodPage == null or foodPage.number == 0}" class="promo-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+    <div class="container">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+
+            <!-- Promo 1: Giảm giá -->
+            <div class="col">
+                <a th:href="@{/restaurants/top-discounts}" class="text-decoration-none">
+                    <div class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-primary">
+                        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&auto=format&fit=crop&q=80"
+                             class="card-img h-100 object-fit-cover promo-bg-img" alt="Giảm đến 50%">
+                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-dark">
+                            <div>
+                                <span class="badge bg-danger rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">ƯU ĐÃI</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-1">GIẢM ĐẾN 50%</h5>
+                                <p class="text-white-50 fs-8 mb-0">Săn deal cực hời mỗi ngày</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Promo 2: Quán mới -->
+            <div class="col">
+                <a th:href="@{/restaurants/new}" class="text-decoration-none">
+                    <div class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-purple">
+                        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80"
+                             class="card-img h-100 object-fit-cover promo-bg-img" alt="Quán mới lên sàn">
+                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-purple">
+                            <div>
+                                <span class="badge bg-warning text-dark rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">KHÁM PHÁ</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-1">QUÁN MỚI LÊN SÀN</h5>
+                                <p class="text-white-50 fs-8 mb-0">Thưởng thức món ngon từ các quán mới</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Promo 3: Giao hàng nhanh -->
+            <div class="col">
+                <a th:href="@{/restaurants/near-you}" class="text-decoration-none">
+                    <div class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-teal">
+                        <img src="https://images.unsplash.com/photo-1526367790999-0150786686a2?w=600&auto=format&fit=crop&q=80"
+                             class="card-img h-100 object-fit-cover promo-bg-img" alt="Giao siêu tốc">
+                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-teal">
+                            <div>
+                                <span class="badge bg-success rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">ĐẶT NGAY</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-1">GIAO SIÊU TỐC</h5>
+                                <p class="text-white-50 fs-8 mb-0">Nhận món nóng hổi chỉ 20-30 phút</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Promo 4: Đối tác thân thiết -->
+            <div class="col">
+                <a th:href="@{/restaurants/trusted}" class="text-decoration-none">
+                    <div class="promo-card card border-0 rounded-4 overflow-hidden shadow-sm h-100 position-relative text-white transition-hover bg-gradient-orange">
+                        <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&auto=format&fit=crop&q=80"
+                             class="card-img h-100 object-fit-cover promo-bg-img" alt="Đối tác thân thiết">
+                        <div class="card-img-overlay d-flex flex-column justify-content-between p-4 bg-overlay-orange">
+                            <div>
+                                <span class="badge bg-primary rounded-pill px-2.5 py-1 text-uppercase fw-bold fs-9 letter-spacing">CHẤT LƯỢNG</span>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold text-white mb-1">ĐỐI TÁC CHỌN LỌC</h5>
+                                <p class="text-white-50 fs-8 mb-0">Thương hiệu uy tín, đảm bảo an toàn</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>

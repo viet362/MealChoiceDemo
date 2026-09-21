@@ -1,0 +1,96 @@
+<!-- Fragment Hero Banner & Search & Category Slider -->
+<div th:fragment="heroBanner" class="hero-section position-relative text-white py-5 mb-5 overflow-hidden" xmlns:th="http://www.thymeleaf.org">
+    <div class="hero-bg-overlay position-absolute top-0 start-0 w-100 h-100"></div>
+
+    <div class="container position-relative z-2 py-4">
+        <!-- Header Text -->
+        <div class="text-center mb-4 pb-2">
+            <h1 class="display-5 fw-extrabold text-white mb-2 text-shadow">
+                Khám phá món ngon & ẩm thực tuyệt hảo <span class="d-inline-block">🍜🍔</span>
+            </h1>
+            <p class="lead text-white-50 mx-auto" style="max-width: 650px;">
+                Danh sách những món ăn ngon, quán nổi bật và giao hàng nhanh chóng tận tay bạn mỗi ngày.
+            </p>
+        </div>
+
+        <!-- Search Box Container -->
+        <div class="search-box-wrapper mx-auto bg-white p-2 rounded-4 shadow-lg mb-4" style="max-width: 860px;">
+            <form action="/search" method="GET" class="row g-2 align-items-center m-0">
+                <div class="col-12 col-md-3 border-end-md">
+                    <div class="dropdown">
+                        <button class="btn btn-white w-100 text-start d-flex align-items-center justify-content-between text-secondary py-2 border-0"
+                                type="button" id="quickSearchDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="d-flex align-items-center gap-2 text-truncate">
+                                <i class="bi bi-geo-alt-fill text-danger"></i>
+                                <span id="selectedCategoryText" class="fw-semibold text-dark">Tất cả danh mục</span>
+                            </span>
+                            <i class="bi bi-chevron-down fs-8 text-muted"></i>
+                        </button>
+                        <input type="hidden" name="categoryId" id="selectedCategoryIdInput" value="">
+                        <ul class="dropdown-menu border-0 shadow-sm rounded-3 py-2 w-100 dropdown-scrollbar" aria-labelledby="quickSearchDropdown">
+                            <li><a class="dropdown-item py-2 fw-medium" href="javascript:void(0)" onclick="selectCategory('', 'Tất cả danh mục')">Tất cả danh mục</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li th:each="cat : ${categories}">
+                                <a class="dropdown-item py-2" href="javascript:void(0)"
+                                   th:data-id="${cat.id}"
+                                   th:data-name="${cat.categoryName}"
+                                   onclick="selectCategory(this.getAttribute('data-id'), this.getAttribute('data-name'))"
+                                   th:text="${cat.categoryName}">Ăn sáng</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="keyword" class="form-control border-0 shadow-none ps-1 py-2 text-dark"
+                               placeholder="Nhập tên món ăn, quán ăn hoặc địa chỉ của bạn...">
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-3">
+                    <button type="submit" class="btn btn-danger w-100 py-2 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm transition-hover">
+                        <i class="bi bi-search"></i>
+                        <span>Tìm kiếm</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Categories Slider Carousel -->
+        <div class="categories-slider-wrapper position-relative mx-auto text-center" style="max-width: 960px;">
+            <p class="text-center text-white-50 fs-8 mb-2">Gợi ý: Cơm trưa, Phở & Bún, Pizza & Mì Ý, Gà Rán & Burger, Trà Sữa...</p>
+
+            <div class="d-inline-flex align-items-center justify-content-center mx-auto" style="max-width: 100%;">
+                <button type="button" id="catSliderPrevBtn" class="btn btn-light rounded-circle shadow-sm slider-nav-btn me-2 flex-shrink-0" onclick="scrollCategorySlider(-1)" aria-label="Previous category">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <div class="category-scroll-container d-flex gap-3 overflow-x-auto py-2 px-1 no-scrollbar" id="categoryScrollBox" style="scroll-behavior: smooth;">
+                    <th:block th:if="${categories != null and !#lists.isEmpty(categories)}">
+                        <a th:each="cat : ${categories}" th:href="@{/search(categoryId=${cat.id})}"
+                           class="category-item-card text-decoration-none text-center bg-white rounded-3 p-2 shadow-sm flex-shrink-0 transition-hover">
+
+                            <!-- Ảnh mặc định cho danh mục (tránh gọi cat.imageUrl) -->
+                            <div class="cat-img-wrapper mx-auto mb-1 rounded-2 overflow-hidden bg-light d-flex align-items-center justify-content-center" style="width: 60px; height: 50px;">
+                                <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=80"
+                                     class="w-100 h-100 object-fit-cover"
+                                     th:alt="${cat.categoryName}">
+                            </div>
+
+                            <span class="d-block fw-bold text-dark fs-8 text-truncate" style="max-width: 80px;" th:text="${cat.categoryName}">Pizza</span>
+                            <span class="d-block text-muted fs-9">Xem ngay</span>
+                        </a>
+                    </th:block>
+                </div>
+
+                <button type="button" id="catSliderNextBtn" class="btn btn-light rounded-circle shadow-sm slider-nav-btn ms-2 flex-shrink-0" onclick="scrollCategorySlider(1)" aria-label="Next category">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

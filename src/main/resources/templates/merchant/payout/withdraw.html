@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rút tiền - Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+
+<body class="merchant-page">
+
+    <div th:replace="~{merchant/layout :: shell('Rút tiền', 'payout', ~{::content})}">
+
+        <section th:fragment="content" class="d-flex flex-column gap-4">
+
+            <div
+                class="merchant-toolbar d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <i class="bi bi-wallet2 me-2 text-danger"></i>
+                        Rút tiền
+                    </h4>
+                    <p class="text-muted mb-0">
+                        Quản lý số dư và gửi yêu cầu rút tiền về tài khoản ngân hàng.
+                    </p>
+                </div>
+                <div>
+                    <a href="#payoutHistorySection"
+                        class="btn btn-outline-dark rounded-3 d-inline-flex align-items-center gap-2 px-3 py-2 shadow-sm">
+                        <i class="bi bi-clock-history text-danger fs-6"></i>
+                        <span class="fw-semibold">Lịch sử nhận/rút tiền</span>
+                        <span class="badge bg-danger text-white rounded-pill ms-1" th:if="${requests != null}"
+                            th:text="${requests.size()}">0</span>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${message}" class="alert alert-success mb-0 rounded-3 shadow-sm">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <span th:text="${message}"></span>
+            </div>
+
+            <div th:if="${error}" class="alert alert-danger mb-0 rounded-3 shadow-sm">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span th:text="${error}"></span>
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-lg-7">
+
+                    <div class="merchant-panel h-100">
+
+                        <h5 class="fw-bold mb-4">
+                            <i class="bi bi-wallet2 me-2 text-danger"></i>Thông tin tài chính
+                        </h5>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block mb-1">Doanh thu đã chốt đối soát</small>
+                                <h5 class="mb-0 fw-bold text-dark"
+                                    th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                    0 VNĐ
+                                </h5>
+                                <small class="text-muted font-size-11">Từ các kỳ trạng thái <strong>Đã xác
+                                        nhận</strong></small>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block mb-1">Đã thanh toán chuyển khoản</small>
+                                <h5 class="mb-0 fw-bold text-secondary"
+                                    th:text="${#numbers.formatDecimal(totalPaidAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                    0 VNĐ
+                                </h5>
+                                <small class="text-muted font-size-11">Đã duyệt thành công</small>
+                            </div>
+
+                            <div class="col-sm-6" th:if="${totalPendingAmount != null and totalPendingAmount > 0}">
+                                <small class="text-muted d-block mb-1">Đang chờ Admin duyệt rút</small>
+                                <h5 class="mb-0 fw-bold text-warning"
+                                    th:text="${#numbers.formatDecimal(totalPendingAmount, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                    0 VNĐ
+                                </h5>
+                                <small class="text-muted font-size-11">Đang tạm khóa để xử lý</small>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <small class="text-muted d-block mb-1">Số dư khả dụng có thể rút</small>
+                                <h4 class="mb-0 fw-bold text-success"
+                                    th:text="${#numbers.formatDecimal(availableBalance, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">
+                                    0 VNĐ
+                                </h4>
+                                <small class="text-success font-size-11 fw-semibold">Sẵn sàng để tạo yêu cầu</small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info py-2 px-3 mb-0 rounded-3 small">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-info-circle-fill fs-6 text-primary mt-0.5"></i>
+                                <div>
+                                    <div>Số dư rút tiền được tính từ các <strong>Kỳ đối soát đã được bạn Xác nhận thành
+                                            công</strong> (đã khấu trừ phí sàn và khuyến mãi).</div>
+                                    <div class="mt-2">
+                                        <a th:href="@{/merchant/settlement}"
+                                            class="btn btn-outline-primary btn-sm px-3 py-1">
+                                            <i class="bi bi-calculator me-1"></i> Đến trang Đối soát doanh thu
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-lg-5">
+
+                    <div class="merchant-panel h-100">
+
+                        <h5 class="fw-bold mb-4">
+                            <i class="bi bi-cash-stack me-2 text-danger"></i>Yêu cầu rút tiền
+                        </h5>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">
+                                Ngân hàng nhận tiền
+                            </label>
+
+                            <div class="fw-bold text-dark"
+                                th:text="${merchant.bankName != null and !#strings.isEmpty(merchant.bankName) ? merchant.bankName : 'Chưa cập nhật ngân hàng'}">
+                                -
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small">
+                                Số tài khoản
+                            </label>
+
+                            <div class="fw-bold text-dark"
+                                th:text="${merchant.bankAccountNumber != null and !#strings.isEmpty(merchant.bankAccountNumber) ? merchant.bankAccountNumber : 'Chưa cập nhật số tài khoản'}">
+                                -
+                            </div>
+                        </div>
+
+                        <form th:action="@{/merchant/payout/withdraw}" method="post">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small">
+                                    Số tiền muốn rút (VNĐ)
+                                </label>
+
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="amount" min="1"
+                                        th:max="${availableBalance}" step="1000" placeholder="Nhập số tiền muốn rút..."
+                                        th:disabled="${!canWithdraw}" required>
+
+                                    <span class="input-group-text bg-light fw-bold">
+                                        VNĐ
+                                    </span>
+                                </div>
+                                <small class="text-muted font-size-11 d-block mt-1">
+                                    Tối đa: <span class="fw-bold text-success"
+                                        th:text="${#numbers.formatDecimal(availableBalance, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}">0
+                                        VNĐ</span>
+                                </small>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100" th:disabled="${!canWithdraw}">
+                                <i class="bi bi-send me-1"></i>
+                                Gửi yêu cầu rút tiền
+                            </button>
+
+                            <div th:if="${!canWithdraw}" class="text-danger small mt-2 text-center">
+                                <span th:if="${totalRevenue <= 1000}">Chưa có kỳ đối soát nào được xác nhận có doanh thu
+                                    > 1.000 VNĐ.</span>
+                                <span th:if="${totalRevenue > 1000 and availableBalance <= 0}">Số dư khả dụng hiện tại
+                                    bằng 0 VNĐ.</span>
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- LỊCH SỬ NHẬN / RÚT TIỀN (PAYOUT HISTORY SECTION) -->
+            <!-- ================================================================= -->
+            <div class="merchant-panel mt-2" id="payoutHistorySection">
+                <div
+                    class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center pb-3 mb-3 border-bottom gap-2">
+                    <div>
+                        <h5 class="fw-bold mb-1 text-dark">
+                            <i class="bi bi-clock-history me-2 text-danger"></i>Lịch sử nhận & rút tiền
+                        </h5>
+                        <small class="text-muted">Theo dõi danh sách các lệnh rút tiền, thanh lý và trạng thái chuyển
+                            khoản từ sàn.</small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border px-3 py-2">
+                            Tổng số giao dịch: <strong th:text="${transactions != null ? transactions.size() : (requests != null ? requests.size() : 0)}">0</strong>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Bảng dữ liệu hoặc Empty State -->
+                <div th:if="${(transactions == null or #lists.isEmpty(transactions)) and (requests == null or #lists.isEmpty(requests))}" class="text-center py-5 text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                    <h6 class="fw-semibold">Chưa có giao dịch nào</h6>
+                    <p class="small mb-0">Khi bạn xác nhận đối soát doanh thu hoặc gửi yêu cầu rút tiền, biến động số dư sẽ được lưu vết chi tiết tại đây.</p>
+                </div>
+
+                <div th:if="${transactions != null and !#lists.isEmpty(transactions)}" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted font-size-12 text-uppercase">
+                            <tr>
+                                <th scope="col" style="width: 150px;">Thời gian</th>
+                                <th scope="col" style="width: 170px;">Loại giao dịch</th>
+                                <th scope="col" style="width: 160px;" class="text-end">Số tiền</th>
+                                <th scope="col">Tài khoản / Diễn giải</th>
+                                <th scope="col" style="width: 160px;" class="text-center">Trạng thái</th>
+                                <th scope="col" style="width: 140px;" class="text-center">Chi tiết</th>
+                            </tr>
+                        </thead>
+                        <tbody class="border-top-0">
+                            <tr th:each="item : ${transactions}">
+                                <!-- Thời gian tạo -->
+                                <td>
+                                    <div class="fw-bold text-dark font-size-13"
+                                        th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy') : '-'}">
+                                        -</div>
+                                    <small class="text-muted font-size-11"
+                                        th:text="${item.createdAt != null ? #temporals.format(item.createdAt, 'HH:mm:ss') : ''}">-</small>
+                                </td>
+
+                                <!-- Loại yêu cầu -->
+                                <td>
+                                    <span class="badge rounded-pill px-2.5 py-1 font-size-11"
+                                          th:classappend="${item.typeBadgeClass}">
+                                        <i th:class="${item.isIncome ? 'bi bi-arrow-down-left-circle-fill me-1' : (item.type == 'LIQUIDATION' ? 'bi bi-file-earmark-x me-1' : 'bi bi-wallet2 me-1')}"></i>
+                                        <span th:text="${item.typeDisplayName}">Rút tiền</span>
+                                    </span>
+                                </td>
+
+                                <!-- Số tiền -->
+                                <td class="text-end">
+                                    <span class="fw-bold fs-6"
+                                          th:classappend="${item.isIncome ? 'text-success' : 'text-danger'}"
+                                          th:text="${(item.isIncome ? '+ ' : '- ') + #numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT') + ' ₫'}">
+                                        0 ₫
+                                    </span>
+                                </td>
+
+                                <!-- Tài khoản nhận / Diễn giải -->
+                                <td>
+                                    <div class="fw-semibold text-dark font-size-13" th:text="${item.accountInfo}">-</div>
+                                    <small class="text-muted font-size-11" th:if="${item.periodLabel != null and item.periodLabel != '-'}" th:text="${item.periodLabel}"></small>
+                                </td>
+
+                                <!-- Trạng thái -->
+                                <td class="text-center">
+                                    <span class="badge px-2.5 py-1.5 rounded-pill font-size-11"
+                                          th:classappend="${item.statusBadgeClass}">
+                                        <i th:class="${item.status == 'COMPLETED' ? 'bi bi-check-circle-fill me-1' : (item.status == 'REJECTED' ? 'bi bi-x-circle-fill me-1' : 'bi bi-hourglass-split me-1')}"></i>
+                                        <span th:text="${item.statusDisplayName}">Đã xử lý</span>
+                                    </span>
+                                    <div class="font-size-10 text-muted mt-0.5" 
+                                         th:if="${item.completedAt != null and !item.isIncome}"
+                                         th:text="${#temporals.format(item.completedAt, 'dd/MM/yyyy HH:mm')}"></div>
+                                    <div class="font-size-10 text-muted mt-0.5" 
+                                         th:if="${item.rejectedAt != null}"
+                                         th:text="${#temporals.format(item.rejectedAt, 'dd/MM/yyyy HH:mm')}"></div>
+                                </td>
+
+                                <!-- Xem chi tiết -->
+                                <td class="text-center">
+                                    <!-- Nếu là giao dịch nhận tiền đối soát -->
+                                    <a th:if="${item.isIncome}" th:href="@{/merchant/settlement}"
+                                       class="btn btn-outline-secondary btn-sm py-1 px-2.5 font-size-11 rounded-pill">
+                                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                    </a>
+
+                                    <!-- Nếu là giao dịch rút tiền / thanh lý -->
+                                    <button th:unless="${item.isIncome}" type="button"
+                                        class="btn btn-outline-secondary btn-sm py-1 px-2.5 font-size-11 rounded-pill"
+                                        th:data-type="${item.typeDisplayName}"
+                                        th:data-amount="${(item.isIncome ? '+ ' : '- ') + #numbers.formatDecimal(item.amount, 0, 'COMMA', 0, 'POINT') + ' ₫'}"
+                                        th:data-account="${item.accountInfo}"
+                                        th:data-status="${item.statusDisplayName}"
+                                        th:data-status-badge="${item.statusBadgeClass}"
+                                        th:data-time="${item.createdAt != null ? #temporals.format(item.createdAt, 'dd/MM/yyyy HH:mm:ss') : '-'}"
+                                        th:data-note="${item.adminNote != null ? item.adminNote : ''}"
+                                        th:data-proof="${item.transferProofUrl != null ? item.transferProofUrl : ''}"
+                                        onclick="openDetailModal(this)">
+                                        <i class="bi bi-eye me-1"></i>Xem chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MODAL CHI TIẾT GIAO DỊCH (GỒM CHỨNG TỪ & GHI CHÚ) -->
+            <div class="modal fade" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header border-bottom-0 pb-0">
+                            <h5 class="modal-title fw-bold text-dark">
+                                <i class="bi bi-receipt me-2 text-primary"></i>Chi tiết giao dịch
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body pt-2">
+                            <!-- Header số tiền -->
+                            <div class="text-center py-3 bg-light rounded-3 mb-3">
+                                <span class="badge rounded-pill mb-2 px-2.5 py-1 font-size-11" id="modalDetailStatusBadge">Đã xử lý</span>
+                                <h3 class="fw-bold mb-0 text-danger" id="modalDetailAmount">- 0 ₫</h3>
+                                <small class="text-muted" id="modalDetailType">Rút tiền</small>
+                            </div>
+
+                            <!-- Chi tiết danh sách thuộc tính -->
+                            <div class="d-flex flex-column gap-2 mb-3 font-size-13">
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Thời gian tạo:</span>
+                                    <span class="fw-semibold text-dark" id="modalDetailTime">-</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-1 border-bottom">
+                                    <span class="text-muted">Tài khoản nhận:</span>
+                                    <span class="fw-semibold text-dark" id="modalDetailAccount">-</span>
+                                </div>
+                            </div>
+
+                            <!-- Khối Ghi chú của Admin -->
+                            <div id="modalDetailNoteBox" class="d-none mb-3">
+                                <div class="alert alert-light border small mb-0 rounded-3">
+                                    <div class="fw-bold text-dark mb-1">
+                                        <i class="bi bi-chat-left-text me-1 text-primary"></i>Ghi chú của Admin:
+                                    </div>
+                                    <div class="text-secondary" id="modalDetailNote"></div>
+                                </div>
+                            </div>
+
+                            <!-- Khối Chứng từ chuyển khoản (Ủy nhiệm chi) -->
+                            <div id="modalDetailProofBox" class="d-none">
+                                <label class="fw-bold font-size-13 text-dark mb-1 d-block">
+                                    <i class="bi bi-image me-1 text-success"></i>Ủy nhiệm chi / Chứng từ:
+                                </label>
+                                <div class="text-center border rounded-3 p-2 bg-light">
+                                    <img id="modalDetailProofImg" src="" class="img-fluid rounded-2 shadow-sm" style="max-height: 250px; cursor: pointer;" alt="Ủy nhiệm chi" onclick="zoomProofImage(this.src)" title="Bấm để xem ảnh lớn">
+                                    <div class="font-size-11 text-muted mt-1">
+                                        <i class="bi bi-zoom-in me-1"></i>Bấm vào ảnh để phóng to
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL PHÓNG TO ẢNH CHỨNG TỪ CHUYỂN KHOẢN -->
+            <div class="modal fade" id="proofImageModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content bg-transparent border-0 text-center">
+                        <div class="modal-body p-0 position-relative">
+                            <button type="button"
+                                class="btn btn-dark btn-sm position-absolute top-0 end-0 m-3 rounded-circle shadow"
+                                data-bs-dismiss="modal" aria-label="Close">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                            <img id="proofModalImg" src="" class="img-fluid rounded-4 shadow-lg bg-white p-2"
+                                style="max-height: 85vh;" alt="Ủy nhiệm chi">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script>
+                function openDetailModal(btn) {
+                    const type = btn.getAttribute('data-type');
+                    const amount = btn.getAttribute('data-amount');
+                    const account = btn.getAttribute('data-account');
+                    const status = btn.getAttribute('data-status');
+                    const statusBadge = btn.getAttribute('data-status-badge');
+                    const time = btn.getAttribute('data-time');
+                    const note = btn.getAttribute('data-note');
+                    const proof = btn.getAttribute('data-proof');
+
+                    document.getElementById('modalDetailType').textContent = type || 'Giao dịch';
+                    document.getElementById('modalDetailAmount').textContent = amount || '0 ₫';
+                    document.getElementById('modalDetailAccount').textContent = account || '-';
+                    document.getElementById('modalDetailTime').textContent = time || '-';
+
+                    const badgeEl = document.getElementById('modalDetailStatusBadge');
+                    badgeEl.className = 'badge rounded-pill mb-2 px-2.5 py-1 font-size-11 ' + (statusBadge || 'bg-secondary');
+                    badgeEl.textContent = status || 'Đã xử lý';
+
+                    // Ghi chú
+                    const noteBox = document.getElementById('modalDetailNoteBox');
+                    const noteText = document.getElementById('modalDetailNote');
+                    if (note && note.trim() !== '') {
+                        noteText.textContent = note;
+                        noteBox.classList.remove('d-none');
+                    } else {
+                        noteBox.classList.add('d-none');
+                    }
+
+                    // Chứng từ
+                    const proofBox = document.getElementById('modalDetailProofBox');
+                    const proofImg = document.getElementById('modalDetailProofImg');
+                    if (proof && proof.trim() !== '') {
+                        proofImg.src = proof;
+                        proofBox.classList.remove('d-none');
+                    } else {
+                        proofBox.classList.add('d-none');
+                    }
+
+                    const modal = new bootstrap.Modal(document.getElementById('transactionDetailModal'));
+                    modal.show();
+                }
+
+                function zoomProofImage(src) {
+                    if (!src) return;
+                    document.getElementById('proofModalImg').src = src;
+                    const modal = new bootstrap.Modal(document.getElementById('proofImageModal'));
+                    modal.show();
+                }
+            </script>
+
+        </section>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách món ăn - Merchant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+    <link rel="stylesheet" th:href="@{/css/food-list.css}">
+</head>
+<body class="merchant-page">
+<div th:replace="~{merchant/layout :: shell('Danh sách món ăn', 'foods', ~{::content})}">
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+        <!-- HEADER -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-1">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Quản lý món ăn</h2>
+                <p class="text-muted mb-0 font-size-14">
+                    Danh sách các món ăn đang phục vụ tại cửa hàng của bạn.
+                </p>
+            </div>
+            <a href="/merchant/foods/create"
+               class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                <i class="bi bi-plus-lg"></i>
+                <span>Thêm món mới</span>
+            </a>
+        </div>
+        <div class="merchant-page-card p-4">
+            <!-- CARD HEADER + SEARCH -->
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4 pb-3 border-bottom">
+                <div>
+                    <h5 class="fw-bold text-dark mb-1">
+                        <i class="bi bi-journal-richtext text-danger me-2"></i>Thực đơn hiện tại
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Tìm kiếm nhanh món ăn theo tên hoặc xem chi tiết từng món.
+                    </p>
+                </div>
+                <!-- TÌM KIẾM + LÀM MỚI -->
+                <div class="d-flex align-items-center gap-2"
+                     style="max-width: 520px; width: 100%;">
+                    <div class="d-flex align-items-center shadow-sm rounded-pill overflow-hidden bg-light border flex-grow-1">
+                        <input type="text"
+                               id="searchInput"
+                               class="form-control bg-light border-0 px-3 py-2 font-size-14 shadow-none"
+                               placeholder="Tìm kiếm món ăn...">
+                        <button type="button"
+                                id="searchBtn"
+                                class="btn btn-danger d-flex align-items-center justify-content-center px-3 border-0 py-2">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary rounded-pill px-3 py-2 font-size-14"
+                            onclick="refreshOrderList()">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Làm mới
+                    </button>
+                </div>
+            </div>
+            <!-- TABLE -->
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                    <tr class="text-muted font-size-13 text-uppercase">
+                        <th class="ps-3 border-0" style="min-width: 280px;">Món ăn</th>
+                        <th class="border-0" style="min-width: 180px;">Danh mục</th>
+                        <th class="border-0" style="min-width: 180px;">Tag</th>
+                        <th class="border-0" style="min-width: 220px;">Địa chỉ</th>
+                        <th class="border-0 text-center" style="min-width: 150px;">Giờ mở cửa</th>
+                        <th class="border-0" style="min-width: 120px;">Giá bán</th>
+                        <th class="border-0" style="min-width: 140px;">Giá KM</th>
+                        <th class="border-0 text-center" style="min-width: 120px;">Chuẩn bị</th>
+                        <th class="border-0" style="min-width: 140px;">Mã giảm giá</th>
+                        <th class="border-0" style="min-width: 130px;">Phí dịch vụ</th>
+                        <th class="border-0 text-center" style="min-width: 140px;">Lượt xem / Đặt</th>
+                        <th class="border-0 text-center" style="min-width: 130px;">Đề cử</th>
+                        <th class="text-center border-0 pe-3" style="min-width: 150px;">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- THÔNG BÁO KHI TÌM KIẾM KHÔNG CÓ KẾT QUẢ -->
+                    <tr id="noSearchResultRow" class="d-none">
+                        <td colspan="13" class="text-center py-5 text-muted">
+                            <i class="bi bi-search fs-2 d-block mb-2 text-secondary opacity-50"></i>
+                            <h6 class="fw-bold text-dark mb-1">Không tìm thấy món ăn phù hợp</h6>
+                            <p class="small text-muted mb-0">Thử tìm với tên món hoặc mô tả khác.</p>
+                        </td>
+                    </tr>
+                    <!-- EMPTY STATE -->
+                    <tr th:if="${foods == null or #lists.isEmpty(foods)}">
+                        <td colspan="13" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="bi bi-inbox fs-1 d-block mb-3 text-muted opacity-50"></i>
+                                <h5 class="fw-bold text-dark mb-1">Chưa có món ăn nào</h5>
+                                <p class="text-muted small mb-4">
+                                    Hãy tạo món ăn đầu tiên để bắt đầu xây dựng menu cho quán.
+                                </p>
+                                <a href="/merchant/foods/create"
+                                   class="btn btn-danger rounded-pill px-4 py-2 fw-semibold">
+                                    <i class="bi bi-plus-lg me-1"></i>Thêm món ngay
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <!-- DANH SÁCH MÓN ĂN -->
+                    <tr th:unless="${foods == null || #lists.isEmpty(foods)}"
+                        th:each="food : ${foods}"
+                        class="food-row"
+                        th:id="'food-row-' + ${food.id}">
+                        <!-- FOOD INFORMATION -->
+                        <td class="ps-3 py-3" style="min-width: 280px;">
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- ẢNH MÓN -->
+                                <div class="position-relative flex-shrink-0" style="width: 56px; height: 56px;">
+                                    <img th:if="${food.imageUrls != null && !#lists.isEmpty(food.imageUrls)}"
+                                         th:src="${food.imageUrls[0]}"
+                                         alt="Ảnh món ăn"
+                                         class="w-100 h-100 rounded-3 object-fit-cover border shadow-sm">
+                                    <div th:unless="${food.imageUrls != null && !#lists.isEmpty(food.imageUrls)}"
+                                         class="w-100 h-100 rounded-3 bg-light d-flex align-items-center justify-content-center text-secondary border">
+                                        <i class="bi bi-image fs-4"></i>
+                                    </div>
+                                    <span th:if="${food.imageUrls != null && #lists.size(food.imageUrls) > 1}"
+                                          class="position-absolute bottom-0 end-0 bg-dark text-white rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                                          style="width: 20px; height: 20px; font-size: 9px; opacity: 0.85; transform: translate(20%, 20%);"
+                                          th:text="'+' + (${#lists.size(food.imageUrls)} - 1)">
+                                        +2
+                                    </span>
+                                </div>
+                                <!-- TÊN + MÔ TẢ -->
+                                <div class="flex-grow-1 overflow-hidden" style="max-width: 240px;">
+                                    <div class="fw-bold text-dark food-name mb-0 text-truncate"
+                                         th:title="${food.foodName}"
+                                         th:text="${food.foodName != null and !#strings.isEmpty(food.foodName) ? (#strings.length(food.foodName) > 30 ? #strings.substring(food.foodName, 0, 30) + '...' : food.foodName) : 'Chưa có tên'}">
+                                        Tên món ăn
+                                    </div>
+                                    <small class="text-muted text-truncate d-block"
+                                           th:title="${food.foodNote}"
+                                           th:text="${food.foodNote != null and !#strings.isEmpty(food.foodNote) ? (#strings.length(food.foodNote) > 30 ? #strings.substring(food.foodNote, 0, 30) + '...' : food.foodNote) : 'Chưa có mô tả'}">
+                                        Mô tả món ăn...
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <!-- CATEGORY -->
+                        <td>
+                            <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
+                                <span th:if="${food.categoryNames == null || #lists.isEmpty(food.categoryNames)}"
+                                      class="text-muted small">Chưa có</span>
+                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) >= 1}"
+                                      class="badge bg-light text-dark border rounded-pill px-2 py-1 font-size-12 fw-medium"
+                                      th:text="${food.categoryNames[0]}">Cơm & Món Việt</span>
+                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) >= 2}"
+                                      class="badge bg-light text-dark border rounded-pill px-2 py-1 font-size-12 fw-medium"
+                                      th:text="${food.categoryNames[1]}">Bún / Phở / Mì</span>
+                                <span th:if="${food.categoryNames != null && #lists.size(food.categoryNames) > 2}"
+                                      class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 font-size-12 fw-bold"
+                                      th:title="${#strings.listJoin(food.categoryNames, ', ')}"
+                                      th:text="'+' + (${#lists.size(food.categoryNames)} - 2)">+2</span>
+                            </div>
+                        </td>
+                        <!-- TAG -->
+                        <td>
+                            <div class="d-flex flex-wrap align-items-center gap-1" style="max-width: 220px;">
+                                <span th:if="${food.tagNames == null || #lists.isEmpty(food.tagNames)}"
+                                      class="text-muted small">Chưa có</span>
+                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) >= 1}"
+                                      class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 font-size-12 fw-medium"
+                                      th:text="${food.tagNames[0]}">Bán chạy</span>
+                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) >= 2}"
+                                      class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1 font-size-12 fw-medium"
+                                      th:text="${food.tagNames[1]}">Món mới</span>
+                                <span th:if="${food.tagNames != null && #lists.size(food.tagNames) > 2}"
+                                      class="badge bg-secondary-subtle text-secondary border rounded-pill px-2 py-1 font-size-12 fw-bold"
+                                      th:title="${#strings.listJoin(food.tagNames, ', ')}"
+                                      th:text="'+' + (${#lists.size(food.tagNames)} - 2)">+3</span>
+                            </div>
+                        </td>
+                        <!-- ĐỊA CHỈ -->
+                        <td>
+                            <div class="d-flex align-items-start gap-2" style="max-width: 170px;">
+                                <i class="bi bi-geo-alt-fill text-danger mt-1 flex-shrink-0"></i>
+                                <span class="small text-dark text-truncate"
+                                      style="max-width: 140px;"
+                                      th:if="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}"
+                                      th:title="${food.merchantAddress}"
+                                      th:text="${#strings.length(food.merchantAddress) > 25 ? #strings.substring(food.merchantAddress, 0, 25) + '...' : food.merchantAddress}">
+                                    123 Nguyễn Trãi...
+                                </span>
+                                <span class="text-muted small"
+                                      th:unless="${food.merchantAddress != null && !#strings.isEmpty(food.merchantAddress)}">
+                                    Chưa có
+                                </span>
+                            </div>
+                        </td>
+                        <!-- GIỜ MỞ/ĐÓNG CỬA -->
+                        <td class="text-center">
+                            <div th:if="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                                 class="d-inline-flex flex-column align-items-center">
+                                <span class="small fw-semibold text-dark">
+                                    <i class="bi bi-clock text-danger me-1"></i>
+                                    <span th:text="${#temporals.format(food.merchantOpenTime, 'HH:mm')}">08:00</span>
+                                </span>
+                                <span class="small text-muted">
+                                    - <span th:text="${#temporals.format(food.merchantCloseTime, 'HH:mm')}">22:00</span>
+                                </span>
+                            </div>
+                            <span th:unless="${food.merchantOpenTime != null && food.merchantCloseTime != null}"
+                                  class="text-muted small">
+                                Chưa cập nhật
+                            </span>
+                        </td>
+                        <!-- GIÁ BÁN -->
+                        <td>
+                            <span class="fw-bold text-dark"
+                                  th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                50,000 đ
+                            </span>
+                        </td>
+                        <!-- GIÁ KHUYẾN MÃI -->
+                        <td>
+                            <span th:if="${food.discountPrice != null and food.discountPrice < food.price}"
+                                  class="text-danger fw-bold"
+                                  th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                45,000 đ
+                            </span>
+                            <span th:unless="${food.discountPrice != null and food.discountPrice < food.price}"
+                                  class="text-muted small fst-italic">
+                                Không giảm giá
+                            </span>
+                        </td>
+                        <!-- THỜI GIAN CHUẨN BỊ -->
+                        <td>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 font-size-12 rounded-pill fw-medium">
+                                <i class="bi bi-clock me-1"></i>
+                                <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">
+                                    20 phút
+                                </span>
+                            </span>
+                        </td>
+                        <!-- MÃ GIẢM GIÁ -->
+                        <td class="text-center">
+                            <div th:if="${food.couponCodes != null and !#lists.isEmpty(food.couponCodes)}"
+                                 class="d-flex flex-wrap justify-content-center gap-1">
+                                <span th:each="code : ${food.couponCodes}"
+                                      class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 font-size-12 fw-medium">
+                                    <i class="bi bi-ticket-perforated me-1"></i>
+                                    <span th:text="${code}">MEALI22</span>
+                                </span>
+                            </div>
+                            <span th:unless="${food.couponCodes != null and !#lists.isEmpty(food.couponCodes)}"
+                                  class="text-muted small">
+                                Không có
+                            </span>
+                        </td>
+                        <!-- PHÍ DỊCH VỤ -->
+                        <td>
+                            <span th:if="${food.serviceFee != null}"
+                                  class="fw-semibold text-dark"
+                                  th:text="${#numbers.formatDecimal(food.serviceFee, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                5,000 đ
+                            </span>
+                            <span th:unless="${food.serviceFee != null}" class="text-muted small">0 đ</span>
+                        </td>
+                        <!-- LƯỢT XEM / LƯỢT ĐẶT -->
+                        <td class="text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-3">
+                                <span class="d-inline-flex align-items-center gap-1 text-muted small"
+                                      th:title="'Lượt xem: ' + ${food.views != null ? food.views : 0}">
+                                    <i class="bi bi-eye"></i>
+                                    <span th:text="${food.views != null ? food.views : 0}">125</span>
+                                </span>
+                                <span class="d-inline-flex align-items-center gap-1 text-muted small"
+                                      th:title="'Lượt đặt: ' + ${food.orderCount != null ? food.orderCount : 0}">
+                                    <i class="bi bi-bag-check"></i>
+                                    <span th:text="${food.orderCount != null ? food.orderCount : 0}">32</span>
+                                </span>
+                            </div>
+                        </td>
+                        <!-- RECOMMENDED -->
+                        <td class="text-center">
+                            <button th:if="${food.isRecommended}" type="button"
+                                    class="btn btn-sm btn-warning rounded-pill px-3 recommend-food-btn"
+                                    th:attr="data-food-id=${food.id},data-recommended=true">
+                                <i class="bi bi-star-fill me-1"></i>Đã đề cử
+                            </button>
+                            <button th:unless="${food.isRecommended}" type="button"
+                                    class="btn btn-sm btn-outline-secondary rounded-pill px-3 recommend-food-btn"
+                                    th:attr="data-food-id=${food.id},data-recommended=false">
+                                <i class="bi bi-star me-1"></i>Đề cử
+                            </button>
+                        </td>
+                        <!-- ACTION -->
+                        <td class="text-center pe-3">
+                            <div class="d-flex align-items-center justify-content-center gap-1">
+                                <a th:href="@{/merchant/foods/{id}(id=${food.id})}"
+                                   class="btn btn-sm btn-light border text-secondary rounded-2"
+                                   title="Xem chi tiết">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/merchant/foods/{id}/edit(id=${food.id})}"
+                                   class="btn btn-sm btn-light border text-primary rounded-2"
+                                   title="Chỉnh sửa">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button"
+                                        class="btn btn-sm btn-light border text-danger rounded-2 delete-food-btn"
+                                        th:attr="data-food-id=${food.id},data-food-name=${food.foodName}"
+                                        title="Xóa món ăn">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- PHÂN TRANG -->
+            <div th:if="${totalPages > 1}"
+                 class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-3 mt-4 pt-3 border-top">
+                <span class="text-muted small">
+                    Trang <strong th:text="${currentPage + 1}">1</strong>
+                    / <strong th:text="${totalPages}">1</strong>
+                </span>
+                <nav aria-label="Phân trang món ăn">
+                    <ul class="pagination mb-0">
+                        <!-- TRANG TRƯỚC -->
+                        <li class="page-item" th:classappend="${currentPage == 0} ? ' disabled'">
+                            <a th:if="${currentPage > 0}"
+                               class="page-link"
+                               th:href="@{/merchant/foods(page=${currentPage - 1}, size=${pageSize})}"
+                               aria-label="Trang trước">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                            <span th:unless="${currentPage > 0}" class="page-link">
+                                <i class="bi bi-chevron-left"></i>
+                            </span>
+                        </li>
+                        <!-- SỐ TRANG -->
+                        <li th:each="pageNumber : ${#numbers.sequence(0, totalPages - 1)}"
+                            class="page-item"
+                            th:classappend="${pageNumber == currentPage} ? ' active'">
+                            <a class="page-link"
+                               th:href="@{/merchant/foods(page=${pageNumber}, size=${pageSize})}"
+                               th:text="${pageNumber + 1}">
+                                1
+                            </a>
+                        </li>
+                        <!-- TRANG SAU -->
+                        <li class="page-item"
+                            th:classappend="${currentPage == totalPages - 1} ? ' disabled'">
+                            <a th:if="${currentPage < totalPages - 1}"
+                               class="page-link"
+                               th:href="@{/merchant/foods(page=${currentPage + 1}, size=${pageSize})}"
+                               aria-label="Trang sau">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                            <span th:unless="${currentPage < totalPages - 1}" class="page-link">
+                                <i class="bi bi-chevron-right"></i>
+                            </span>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- MODAL XÁC NHẬN XÓA MÓN ĂN -->
+<div class="modal fade" id="deleteFoodModal" tabindex="-1" aria-labelledby="deleteFoodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle"
+                     style="width: 68px; height: 68px;">
+                    <i class="bi bi-trash3-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2" id="deleteFoodModalLabel">Xác nhận xóa món ăn</h5>
+                <p class="text-muted small mb-4">
+                    Bạn có chắc chắn muốn xóa món <strong id="deleteFoodName" class="text-dark"></strong> không?
+                    Hành động này sẽ gỡ món khỏi thực đơn hiện tại của quán.
+                </p>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <button type="button"
+                            class="btn btn-light rounded-pill px-4 py-2 fw-semibold text-secondary"
+                            data-bs-dismiss="modal">
+                        Hủy bỏ
+                    </button>
+                    <button type="button"
+                            id="confirmDeleteFoodBtn"
+                            class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-trash"></i>
+                        <span>Xác nhận xóa</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/food-list.js}"></script>
+</body>
+</html>

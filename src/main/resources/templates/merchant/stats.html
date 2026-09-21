@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống kê doanh thu - Merchant</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .stat-card {
+            background: #fff;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+        }
+
+        .icon-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .table-custom {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .table-custom tbody tr {
+            background: #fff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+
+        .table-custom tbody tr:hover {
+            background: #f1f5f9;
+        }
+
+        .table-custom td,
+        .table-custom th {
+            padding: 14px 18px;
+            border: none;
+            vertical-align: middle;
+        }
+
+        .badge-soft {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+
+<body class="merchant-page">
+
+<div th:replace="~{merchant/layout :: shell('Thống kê doanh thu', 'stats', ~{::content})}">
+
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <!-- Header thống kê -->
+        <div class="merchant-toolbar d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    <i class="bi bi-graph-up-arrow me-2 text-danger"></i>
+                    Thống kê doanh thu & báo cáo
+                </h4>
+                <p class="text-muted mb-0">
+                    Theo dõi tình hình kinh doanh của cửa hàng.
+                </p>
+            </div>
+
+            <button type="button"
+                    class="btn btn-outline-secondary rounded-pill px-3"
+                    onclick="loadAllStats()">
+                <i class="bi bi-arrow-clockwise me-1"></i>
+                Làm mới
+            </button>
+        </div>
+
+        <!-- Thống kê coupon -->
+        <div class="row g-3">
+
+            <div class="col-12 col-md-4">
+                <div class="stat-card p-3 d-flex align-items-center h-100">
+                    <div class="icon-box me-3"
+                         style="background: #e0f2fe; color: #0284c7;">
+                        <i class="bi bi-ticket-perforated"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-medium">
+                            Đơn hàng dùng ưu đãi
+                        </span>
+                        <h4 class="fw-bold mb-0 mt-1"
+                            id="totalOrdersWithDiscount">
+                            0
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="stat-card p-3 d-flex align-items-center h-100">
+                    <div class="icon-box me-3"
+                         style="background: #fef3c7; color: #d97706;">
+                        <i class="bi bi-tags"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-medium">
+                            Tổng tiền khuyến mãi
+                        </span>
+                        <h4 class="fw-bold mb-0 mt-1"
+                            id="totalDiscountAmount">
+                            0 ₫
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <div class="stat-card p-3 d-flex align-items-center h-100">
+                    <div class="icon-box me-3"
+                         style="background: #dcfce7; color: #15803d;">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div>
+                        <span class="text-muted small fw-medium">
+                            Doanh thu từ mã giảm giá
+                        </span>
+                        <h4 class="fw-bold mb-0 mt-1"
+                            id="totalCouponRevenue">
+                            0 ₫
+                        </h4>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Biểu đồ doanh thu -->
+        <div class="stat-card p-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="bi bi-bar-chart-line text-danger me-2"></i>
+                    Biểu đồ doanh thu
+                </h5>
+
+                <select id="timeFilter"
+                        class="form-select form-select-sm w-auto rounded-pill px-3 shadow-sm fw-semibold">
+                    <option value="week">Theo tuần (7 ngày)</option>
+                    <option value="month" selected>Theo tháng (12 tháng)</option>
+                    <option value="quarter">Theo quý (4 quý)</option>
+                </select>
+            </div>
+
+            <div style="height: 320px; position: relative;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+
+        </div>
+
+        <!-- Top món ăn và khách hàng -->
+        <div class="row g-4">
+
+            <!-- Top món bán chạy -->
+            <div class="col-12 col-lg-6">
+                <div class="stat-card p-4 h-100">
+
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-fire text-warning me-2"></i>
+                            Top món bán chạy
+                        </h5>
+
+                        <span class="badge badge-soft bg-warning text-dark">
+                            Phổ biến
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom mb-0">
+                            <thead>
+                            <tr class="text-muted small">
+                                <th>TÊN MÓN ĂN</th>
+                                <th class="text-center">SỐ LƯỢNG</th>
+                                <th class="text-end">DOANH THU</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="topFoodsTable"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Khách hàng thân thiết -->
+            <div class="col-12 col-lg-6">
+                <div class="stat-card p-4 h-100">
+
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-person-hearts text-primary me-2"></i>
+                            Khách hàng thân thiết
+                        </h5>
+
+                        <span class="badge badge-soft bg-primary-subtle text-primary">
+                            VIP
+                        </span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-custom mb-0">
+                            <thead>
+                            <tr class="text-muted small">
+                                <th>KHÁCH HÀNG</th>
+                                <th class="text-center">SỐ ĐƠN</th>
+                                <th class="text-end">TỔNG CHI TIÊU</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="topCustomersTable"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </section>
+</div>
+
+<script>
+    const MERCHANT_ID = '10000000-0000-0000-0000-000000000001';
+    let chartInstance = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAllStats();
+
+        document.getElementById('timeFilter').addEventListener('change', loadRevenueChart);
+    });
+
+    // Load toàn bộ dữ liệu thống kê
+    function loadAllStats() {
+        loadCouponStats();
+        loadRevenueChart();
+        loadTopFoods();
+        loadTopCustomers();
+    }
+
+    // Định dạng tiền Việt Nam
+    function formatVND(value) {
+        return new Intl.NumberFormat('vi-VN', {
+            style: 'currency',
+            currency: 'VND'
+        }).format(value || 0);
+    }
+
+    // Load thống kê coupon
+    function loadCouponStats() {
+        fetch(`/api/merchant/stats/coupons?merchantId=${MERCHANT_ID}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('totalOrdersWithDiscount').innerText =
+                    data.totalOrdersWithDiscount || 0;
+
+                document.getElementById('totalDiscountAmount').innerText =
+                    formatVND(data.totalDiscountAmount);
+
+                document.getElementById('totalCouponRevenue').innerText =
+                    formatVND(data.totalRevenue);
+            })
+            .catch(error => console.error('Lỗi load coupon stats:', error));
+    }
+
+    // Load biểu đồ doanh thu
+    function loadRevenueChart() {
+        const type = document.getElementById('timeFilter').value;
+
+        fetch(`/api/merchant/stats/revenue?merchantId=${MERCHANT_ID}&type=${type.toUpperCase()}`)
+            .then(response => response.json())
+            .then(data => {
+                const labels = data.map(item => item.period);
+                const revenues = data.map(item => item.totalRevenue);
+
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                const canvas = document.getElementById('revenueChart');
+                const context = canvas.getContext('2d');
+
+                const gradient = context.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(255, 71, 87, 0.4)');
+                gradient.addColorStop(1, 'rgba(255, 71, 87, 0.01)');
+
+                chartInstance = new Chart(context, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Doanh thu (VNĐ)',
+                            data: revenues,
+                            fill: true,
+                            backgroundColor: gradient,
+                            borderColor: '#ff4757',
+                            borderWidth: 3,
+                            tension: 0.35,
+                            pointBackgroundColor: '#ff4757',
+                            pointRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f1f5f9'
+                                },
+                                ticks: {
+                                    callback: value =>
+                                        value >= 1000000
+                                            ? (value / 1000000).toFixed(1) + ' Tr đ'
+                                            : value.toLocaleString('vi-VN') + ' đ'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Lỗi load biểu đồ:', error));
+    }
+
+    // Load top món bán chạy
+    function loadTopFoods() {
+        fetch(`/api/merchant/stats/foods?merchantId=${MERCHANT_ID}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('topFoodsTable');
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                Chưa có dữ liệu
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold text-dark">
+                                ${item.foodName}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark fw-bold border">
+                                ${item.totalQuantitySold} phần
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold text-danger">
+                            ${formatVND(item.totalRevenue)}
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(error => console.error('Lỗi load top foods:', error));
+    }
+
+    // Load khách hàng thân thiết
+    function loadTopCustomers() {
+        fetch(`/api/merchant/stats/customers?merchantId=${MERCHANT_ID}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('topCustomersTable');
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center text-muted py-3">
+                                Chưa có dữ liệu
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(item => `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold text-dark">
+                                ${item.customerName}
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-envelope me-1"></i>
+                                ${item.email || 'Khách vãng lai'}
+                            </small>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark fw-bold border">
+                                ${item.totalOrders} đơn
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold text-success">
+                            ${formatVND(item.totalSpent)}
+                        </td>
+                    </tr>
+                `).join('');
+            })
+            .catch(error => console.error('Lỗi load top customers:', error));
+    }
+</script>
+
+</body>
+</html>

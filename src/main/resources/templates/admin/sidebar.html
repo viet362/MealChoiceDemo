@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar(activeMenu)"
+       class="admin-sidebar">
+
+    <div class="admin-sidebar-inner d-flex flex-column h-100">
+
+        <!-- Brand -->
+        <div class="admin-sidebar-brand
+                    d-flex
+                    align-items-center
+                    gap-3
+                    mb-4">
+
+            <div class="admin-sidebar-brand-badge">
+
+                <i class="bi bi-shield-lock-fill"></i>
+
+            </div>
+
+            <div class="admin-sidebar-brand-copy overflow-hidden">
+
+                <div class="admin-sidebar-brand-title">
+                    Admin Control
+                </div>
+
+                <small class="text-muted">
+                    Hệ thống quản trị
+                </small>
+
+            </div>
+
+        </div>
+
+        <!-- Nhóm chức năng -->
+        <div class="admin-sidebar-group-title">
+            Quản trị hệ thống
+        </div>
+
+        <nav class="nav flex-column gap-1">
+
+            <!-- Dashboard -->
+            <a th:href="@{/admin/dashboard}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''">
+
+                <i class="bi bi-grid-fill"></i>
+
+                <span class="admin-sidebar-label">
+                    Tổng quan
+                </span>
+
+            </a>
+
+            <!-- Quản lý Merchant -->
+            <a th:href="@{/admin/merchants}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'merchants'} ? ' active' : ''">
+
+                <i class="bi bi-shop"></i>
+
+                <span class="admin-sidebar-label">
+                    Quản lý Merchant
+                </span>
+
+            </a>
+            <!-- Quản lý Đối tác Vận chuyển -->
+            <a th:href="@{/admin/delivery-partners}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'delivery-partners'} ? ' active' : ''">
+
+                <i class="bi bi-truck"></i>
+
+                <span class="admin-sidebar-label">
+                    Đối tác Vận chuyển
+                </span>
+
+            </a>
+
+            <!-- Đối soát & Khiếu nại Doanh thu -->
+            <a th:href="@{/admin/settlements}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'settlements'} ? ' active' : ''">
+
+                <i class="bi bi-receipt-cutoff"></i>
+
+                <span class="admin-sidebar-label">
+                    Đối soát & Khiếu nại
+                </span>
+
+            </a>
+
+            <!-- Yêu cầu thanh toán -->
+            <a th:href="@{/admin/payout-requests}"
+               class="nav-link"
+               th:classappend="${activeMenu == 'payouts'} ? ' active' : ''">
+
+                <i class="bi bi-cash-stack"></i>
+
+                <span class="admin-sidebar-label">
+                    Yêu cầu thanh toán
+                </span>
+
+            </a>
+        </nav>
+
+        <!-- Đăng xuất -->
+        <div class="mt-auto pt-3 border-top">
+
+            <button type="button"
+                    class="admin-sidebar-button"
+                    onclick="handleLogout(event)">
+
+                <i class="bi bi-box-arrow-right"></i>
+
+                <span class="admin-sidebar-label">
+                    Đăng xuất
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</aside>
+
+</body>
+</html>

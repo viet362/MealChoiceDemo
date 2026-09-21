@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Đối soát Doanh thu & Khiếu nại - Admin MealChoice</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .claim-card-evidence {
+            max-height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .claim-card-evidence:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stat-card-admin {
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.06);
+            background: #fff;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease;
+        }
+        .stat-card-admin:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="admin-page">
+
+<div th:replace="~{admin/layout :: shell('Quản lý Đối soát & Khiếu nại', 'settlements', ~{::content})}">
+
+    <section th:fragment="content" class="container-fluid px-0">
+
+        <!-- 4 Thẻ Thống kê Tổng quan -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card-admin d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-primary bg-opacity-10 text-primary fs-4">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Tổng kỳ đối soát</div>
+                        <div class="fs-4 fw-bold text-dark" th:text="${stats.totalSettlements}">0</div>
+                        <small class="text-muted" th:text="${stats.totalPendingConfirm} + ' chờ xác nhận'"></small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card-admin d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-success bg-opacity-10 text-success fs-4">
+                        <i class="bi bi-check2-circle"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Đã xác nhận (Chờ Payout)</div>
+                        <div class="fs-4 fw-bold text-success" th:text="${stats.totalConfirmed}">0</div>
+                        <small class="text-success fw-semibold" th:text="${#numbers.formatDecimal(stats.totalPendingPayoutAmount != null ? stats.totalPendingPayoutAmount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'"></small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card-admin d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-danger bg-opacity-10 text-danger fs-4">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Khiếu nại đang xử lý</div>
+                        <div class="fs-4 fw-bold text-danger" th:text="${stats.totalActiveClaims}">0</div>
+                        <small class="text-danger" th:text="${stats.totalDisputed} + ' kỳ đang khiếu nại'"></small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6 col-xl-3">
+                <div class="stat-card-admin d-flex align-items-center gap-3">
+                    <div class="rounded-circle p-3 bg-warning bg-opacity-10 text-warning fs-4">
+                        <i class="bi bi-hourglass-split"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Chờ Merchant chốt số</div>
+                        <div class="fs-4 fw-bold text-warning-emphasis" th:text="${stats.totalPendingConfirm}">0</div>
+                        <small class="text-muted">Đang trong kỳ đối soát</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bộ Lọc & Tìm Kiếm -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-3 p-md-4">
+                <form th:action="@{/admin/settlements}" method="GET" class="row g-3 align-items-center">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-semibold text-muted">Lọc theo trạng thái kỳ</label>
+                        <select name="status" class="form-select form-select-sm rounded-3" onchange="this.form.submit()">
+                            <option value="ALL" th:selected="${selectedStatus == 'ALL'}">-- Tất cả trạng thái --</option>
+                            <option value="PENDING_CONFIRMATION" th:selected="${selectedStatus == 'PENDING_CONFIRMATION'}">Chờ xác nhận</option>
+                            <option value="CONFIRMED" th:selected="${selectedStatus == 'CONFIRMED'}">Đã xác nhận</option>
+                            <option value="DISPUTED" th:selected="${selectedStatus == 'DISPUTED'}">Đang khiếu nại</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 col-md-6">
+                        <label class="form-label small fw-semibold text-muted">Tìm kiếm Merchant / Kỳ</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search"></i></span>
+                            <input type="text" name="keyword" th:value="${keyword}" class="form-control border-start-0" placeholder="Nhập tên quán ăn, email, hoặc tháng (vd: 2026-09)...">
+                            <button type="submit" class="btn btn-danger px-3">Tìm kiếm</button>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-md-2 d-flex align-items-end">
+                        <a th:href="@{/admin/settlements}" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Đặt lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bảng Danh Sách Đối Soát & Khiếu Nại -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="card-title fw-bold mb-0 text-dark">
+                    <i class="bi bi-list-columns-reverse text-danger me-2"></i>Danh sách Đối soát & Tra soát sự cố
+                </h5>
+                <span class="badge bg-light text-dark border px-3 py-2" th:text="${#lists.size(settlements)} + ' bản ghi'"></span>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase font-size-12">
+                            <tr>
+                                <th class="ps-4">Cửa hàng (Merchant)</th>
+                                <th>Kỳ đối soát</th>
+                                <th class="text-end">Doanh số</th>
+                                <th class="text-end">Khuyến mãi</th>
+                                <th class="text-end">Phí sàn</th>
+                                <th class="text-end">Thực nhận</th>
+                                <th class="text-center">Đơn</th>
+                                <th class="text-center">Trạng thái kỳ</th>
+                                <th class="text-center">Khiếu nại</th>
+                                <th class="text-center pe-4">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(settlements)}">
+                                <td colspan="10" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                                    Không tìm thấy kỳ đối soát nào phù hợp với bộ lọc.
+                                </td>
+                            </tr>
+                            <tr th:each="item : ${settlements}">
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark" th:text="${item.merchantRestaurantName}">Tên Quán</div>
+                                    <div class="small text-muted" th:text="${item.merchantEmail}">email@gmail.com</div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark" th:text="${item.periodLabel}">Tháng 09/2026</span>
+                                    <small class="d-block text-muted" th:text="${item.periodKey}"></small>
+                                </td>
+                                <td class="text-end fw-semibold text-dark" th:text="${#numbers.formatDecimal(item.totalGrossRevenue != null ? item.totalGrossRevenue : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                <td class="text-end text-warning-emphasis" th:text="${#numbers.formatDecimal(item.totalDiscount != null ? item.totalDiscount : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                <td class="text-end" style="color: #7e22ce;" th:text="${#numbers.formatDecimal(item.totalCommissionFee != null ? item.totalCommissionFee : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                <td class="text-end fw-bold text-success" th:text="${#numbers.formatDecimal(item.netRevenue != null ? item.netRevenue : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border" th:text="${item.totalOrders}">0</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge" th:classappend="${item.statusBadgeClass}" th:text="${item.statusDisplayName}">Chờ xác nhận</span>
+                                </td>
+                                <td class="text-center">
+                                    <th:block th:if="${item.hasClaim}">
+                                        <span class="badge" th:classappend="${item.claimStatusBadgeClass}" th:text="${item.claimStatusDisplayName}">Chờ xử lý</span>
+                                    </th:block>
+                                    <th:block th:unless="${item.hasClaim}">
+                                        <span class="text-muted small">-</span>
+                                    </th:block>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <div class="btn-group btn-group-sm">
+                                        <!-- Nút Tra soát đơn -->
+                                        <button type="button" class="btn btn-outline-primary"
+                                                th:onclick="'openSettlementOverviewModal(' + ${item.settlementId} + ')'"
+                                                title="Xem chi tiết đơn hàng trong kỳ">
+                                            <i class="bi bi-eye-fill me-1"></i> Tra soát
+                                        </button>
+
+                                        <!-- Nút Xử lý khiếu nại (khi PENDING) -->
+                                        <button th:if="${item.hasClaim and item.claimStatus == 'PENDING'}"
+                                                type="button"
+                                                class="btn btn-outline-danger"
+                                                th:data-settlement-id="${item.settlementId}"
+                                                th:data-claim-id="${item.claimId}"
+                                                th:data-claim-reason="${item.claimReasonDisplayName}"
+                                                th:data-claim-desc="${item.claimDescription}"
+                                                th:data-claim-img="${item.claimEvidenceImageUrl != null ? item.claimEvidenceImageUrl : ''}"
+                                                th:data-claim-status="${item.claimStatus}"
+                                                th:data-merchant-name="${item.merchantRestaurantName}"
+                                                th:data-period-label="${item.periodLabel}"
+                                                th:data-admin-note="${item.claimAdminNote != null ? item.claimAdminNote : ''}"
+                                                onclick="openClaimHandleModalFromBtn(this)"
+                                                title="Xử lý khiếu nại">
+                                            <i class="bi bi-shield-exclamation me-1"></i> Xử lý
+                                        </button>
+
+                                        <!-- Nút Xem khiếu nại (khi đã RESOLVED hoặc REJECTED) -->
+                                        <button th:if="${item.hasClaim and item.claimStatus != 'PENDING'}"
+                                                type="button"
+                                                class="btn btn-outline-secondary"
+                                                th:data-settlement-id="${item.settlementId}"
+                                                th:data-claim-id="${item.claimId}"
+                                                th:data-claim-reason="${item.claimReasonDisplayName}"
+                                                th:data-claim-desc="${item.claimDescription}"
+                                                th:data-claim-img="${item.claimEvidenceImageUrl != null ? item.claimEvidenceImageUrl : ''}"
+                                                th:data-claim-status="${item.claimStatus}"
+                                                th:data-merchant-name="${item.merchantRestaurantName}"
+                                                th:data-period-label="${item.periodLabel}"
+                                                th:data-admin-note="${item.claimAdminNote != null ? item.claimAdminNote : ''}"
+                                                onclick="openClaimHandleModalFromBtn(this)"
+                                                title="Xem chi tiết khiếu nại">
+                                            <i class="bi bi-eye me-1"></i> Xem khiếu nại
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 1: TRA SOÁT CHI TIẾT ĐƠN HÀNG TRONG KỲ -->
+        <!-- ================================================================= -->
+        <div class="modal fade" id="settlementDetailModal" tabindex="-1" aria-labelledby="settlementDetailModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <div class="modal-header border-bottom bg-light">
+                        <div>
+                            <h5 class="modal-dialog-title fw-bold text-dark mb-0" id="settlementDetailModalLabel">
+                                <i class="bi bi-receipt text-danger me-2"></i>Chi tiết Đơn hàng Đối soát
+                            </h5>
+                            <small class="text-muted" id="modalMerchantSubTitle">Cửa hàng: - | Kỳ: -</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- 4 Chỉ số tóm tắt -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <small class="text-muted d-block">Tổng doanh số</small>
+                                    <span class="fw-bold text-dark fs-6" id="modalGross">0 đ</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <small class="text-muted d-block">Khuyến mãi</small>
+                                    <span class="fw-bold text-warning-emphasis fs-6" id="modalDiscount">0 đ</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 bg-light rounded-3 text-center">
+                                    <small class="text-muted d-block">Phí sàn chiết khấu</small>
+                                    <span class="fw-bold fs-6" style="color: #7e22ce;" id="modalFee">0 đ</span>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="p-3 bg-light rounded-3 text-center border-start border-success border-3">
+                                    <small class="text-muted d-block">Doanh thu thực nhận</small>
+                                    <span class="fw-bold text-success fs-6" id="modalNet">0 đ</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bảng Đơn hàng -->
+                        <h6 class="fw-bold mb-3"><i class="bi bi-card-checklist me-2 text-danger"></i>Danh sách Đơn hoàn thành trong kỳ:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover align-middle mb-0 font-size-13">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Mã đơn hàng</th>
+                                        <th>Thời gian đặt</th>
+                                        <th>Khách hàng</th>
+                                        <th class="text-end">Tiền món</th>
+                                        <th class="text-end">Giảm giá</th>
+                                        <th class="text-end">Phí sàn</th>
+                                        <th class="text-end">Thực nhận</th>
+                                        <th class="text-center">Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modalOrdersTbody">
+                                    <tr><td colspan="9" class="text-center py-4 text-muted">Đang tải dữ liệu...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm px-4" data-bs-dismiss="modal">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 2: XỬ LÝ KHIẾU NẠI (APPROVE / REJECT) -->
+        <!-- ================================================================= -->
+        <div class="modal fade" id="claimHandleModal" tabindex="-1" aria-labelledby="claimHandleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow rounded-4">
+                    <div class="modal-header border-bottom bg-danger bg-opacity-10">
+                        <div>
+                            <h5 class="modal-title fw-bold text-danger mb-0" id="claimHandleModalLabel">
+                                <i class="bi bi-shield-exclamation me-2"></i>Chi tiết Khiếu nại Đối soát từ Merchant
+                            </h5>
+                            <small class="text-muted" id="claimModalMerchantInfo">Merchant: - | Kỳ: -</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- Alert thông báo khiếu nại đã xử lý -->
+                        <div id="claimProcessedNotice" class="alert alert-info py-2 px-3 rounded-3 small mb-3 d-none">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            <span id="claimProcessedNoticeText"></span>
+                        </div>
+
+                        <!-- Thông tin khiếu nại -->
+                        <div class="p-3 bg-light rounded-3 mb-3 border">
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-4 text-muted small fw-semibold">Lý do khiếu nại:</div>
+                                <div class="col-sm-8 fw-bold text-danger" id="claimReasonText">-</div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-4 text-muted small fw-semibold">Nội dung mô tả:</div>
+                                <div class="col-sm-8 text-dark" id="claimDescriptionText">-</div>
+                            </div>
+                            <div class="row g-2 mb-2" id="claimEvidenceRow">
+                                <div class="col-sm-4 text-muted small fw-semibold">Ảnh hóa đơn / Bằng chứng:</div>
+                                <div class="col-sm-8">
+                                    <img id="claimEvidenceImg" src="" alt="Chứng từ" class="claim-card-evidence border" onclick="showLightbox(this.src)">
+                                    <small class="d-block text-muted mt-1"><i class="bi bi-zoom-in me-1"></i>Nhấp vào ảnh để phóng to</small>
+                                </div>
+                            </div>
+                            <div class="row g-2" id="claimStatusRow">
+                                <div class="col-sm-4 text-muted small fw-semibold">Trạng thái hiện tại:</div>
+                                <div class="col-sm-8" id="claimStatusBadgeContainer">
+                                    <span class="badge bg-warning text-dark">Chờ xử lý</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Admin Quyết định -->
+                        <form id="adminClaimActionForm">
+                            <input type="hidden" id="handleClaimId">
+                            <div class="mb-3" id="adjustmentAmountContainer">
+                                <label for="adjustmentAmountInput" class="form-label fw-semibold small">
+                                    <i class="bi bi-cash-stack text-success me-1"></i>Số tiền bồi hoàn / điều chỉnh (VNĐ)
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" id="adjustmentAmountInput" class="form-control fw-bold text-success" placeholder="0" value="0" step="1000">
+                                    <span class="input-group-text bg-light fw-bold">₫</span>
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    Nhập số tiền dương (+) để bồi hoàn thêm cho Merchant hoặc số âm (-) nếu khấu trừ. Số tiền này sẽ tự động cộng vào Doanh thu thực nhận khi Admin chấp thuận khiếu nại.
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="adminNoteInput" class="form-label fw-semibold small">Ghi chú giải trình của Admin <span class="text-danger" id="adminNoteRequiredMark">*</span></label>
+                                <textarea id="adminNoteInput" class="form-control" rows="3" placeholder="Nhập nội dung giải thích, căn cứ tra soát hoặc hướng dẫn điều chỉnh cho Merchant..."></textarea>
+                                <small class="text-muted" id="adminNoteHelpText">Nội dung này sẽ hiển thị trực tiếp trên giao diện của Merchant.</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer border-top bg-light d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Đóng</button>
+                        <div class="d-flex gap-2" id="claimActionButtonsContainer">
+                            <!-- Nút Từ chối khiếu nại -->
+                            <button type="button" class="btn btn-outline-danger btn-sm px-3" id="btnRejectClaim" onclick="executeClaimAction('reject')">
+                                <i class="bi bi-x-circle me-1"></i> Từ chối khiếu nại
+                            </button>
+                            <!-- Nút Chấp thuận khiếu nại -->
+                            <button type="button" class="btn btn-success btn-sm px-3" id="btnResolveClaim" onclick="executeClaimAction('resolve')">
+                                <i class="bi bi-check-circle-fill me-1"></i> Chấp thuận & Chuyển Payout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 3: LIGHTBOX PHÓNG TO ẢNH -->
+        <!-- ================================================================= -->
+        <div class="modal fade" id="imageLightboxModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-transparent border-0 text-center">
+                    <div class="modal-body p-0 position-relative">
+                        <button type="button" class="btn btn-dark btn-sm position-absolute top-0 end-0 m-3 rounded-circle" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <img id="lightboxImage" src="" class="img-fluid rounded-4 shadow-lg bg-white p-2" style="max-height: 85vh;" alt="Ảnh phóng to">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:src="@{/js/admin-settlement.js}"></script>
+    </section>
+
+</div>
+
+</body>
+</html>

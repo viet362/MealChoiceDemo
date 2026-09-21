@@ -1,0 +1,28 @@
+<!-- Fragment Món ngon dành riêng cho bạn (8 món) -->
+<section th:fragment="recommendedFoods" class="py-4" xmlns:th="http://www.thymeleaf.org">
+    <div class="container">
+        <!-- Section Header -->
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <span class="badge bg-danger bg-opacity-10 text-danger rounded-pill px-2.5 py-1 fs-8 fw-bold">
+                <i class="bi bi-heart-fill me-1"></i>Gợi ý cá nhân hóa
+            </span>
+            <h4 class="fw-bold text-dark mb-0">Món dành riêng cho bạn</h4>
+        </div>
+
+        <!-- 8 Foods Grid (4 Cột x 2 Hàng) -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4"
+            th:if="${recommendedFoods != null and !#lists.isEmpty(recommendedFoods)}">
+            <th:block th:each="recFood : ${recommendedFoods}">
+                <!-- Tái sử dụng fragment card món ăn từ trang chủ -->
+                <div th:replace="~{homepage/food-card-item :: foodCard(food=${recFood})}"></div>
+            </th:block>
+        </div>
+
+        <!-- Fallback if empty -->
+        <div th:if="${recommendedFoods == null or #lists.isEmpty(recommendedFoods)}"
+            class="text-center py-4 text-muted bg-white rounded-4 shadow-sm">
+            <i class="bi bi-basket fs-1 text-secondary mb-2 d-block"></i>
+            <p class="mb-0 fs-7">Hiện chưa có món ăn gợi ý cùng cửa hàng trong khu vực của bạn.</p>
+        </div>
+    </div>
+</section>

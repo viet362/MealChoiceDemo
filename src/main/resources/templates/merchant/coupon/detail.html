@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết Coupon - Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+
+<body class="merchant-page">
+
+<div th:replace="~{merchant/layout :: shell('Chi tiết Coupon', 'coupons', ~{::content})}">
+
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <div class="merchant-toolbar d-flex justify-content-between align-items-center gap-3">
+            <div>
+                <h4 class="fw-bold mb-1">
+                    <i class="bi bi-ticket-perforated me-2 text-danger"></i>
+                    Chi tiết Coupon
+                </h4>
+                <p class="text-muted mb-0">
+                    Xem thông tin chi tiết của mã giảm giá.
+                </p>
+            </div>
+
+            <div class="d-flex gap-2">
+                <a th:href="@{/merchant/coupons}"
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Quay lại
+                </a>
+
+                <a th:href="@{/merchant/coupons/{id}/edit(id=${coupon.id})}"
+                   class="btn btn-danger">
+                    <i class="bi bi-pencil me-1"></i>
+                    Sửa coupon
+                </a>
+            </div>
+        </div>
+
+        <div class="merchant-panel">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <div class="text-muted small mb-1">Mã coupon</div>
+                    <h3 class="fw-bold mb-0"
+                        th:text="${coupon.couponCode}">
+                        COUPON20
+                    </h3>
+                </div>
+
+                <span th:if="${coupon.isActive}"
+                      class="badge bg-success-subtle text-success fs-6">
+                    <i class="bi bi-check-circle me-1"></i>
+                    Đang hoạt động
+                </span>
+
+                <span th:unless="${coupon.isActive}"
+                      class="badge bg-secondary-subtle text-secondary fs-6">
+                    <i class="bi bi-x-circle me-1"></i>
+                    Đã tắt
+                </span>
+            </div>
+
+            <div class="row g-4">
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Loại giảm giá
+                        </div>
+
+                        <strong th:if="${coupon.discountType.name() == 'PERCENT'}"
+                                class="text-danger">
+                            Giảm theo phần trăm
+                        </strong>
+
+                        <strong th:if="${coupon.discountType.name() == 'FIXED'}"
+                                class="text-warning-emphasis">
+                            Giảm trực tiếp
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Giá trị giảm
+                        </div>
+
+                        <strong class="fs-5"
+                                th:text="${coupon.discountValue}">
+                            20
+                        </strong>
+
+                        <span th:if="${coupon.discountType.name() == 'PERCENT'}">
+                            %
+                        </span>
+
+                        <span th:if="${coupon.discountType.name() == 'FIXED'}">
+                            VNĐ
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Thời gian bắt đầu
+                        </div>
+
+                        <strong th:if="${coupon.startAt != null}"
+                                th:text="${#temporals.format(coupon.startAt, 'dd/MM/yyyy HH:mm')}">
+                            01/08/2026 08:00
+                        </strong>
+
+                        <strong th:unless="${coupon.startAt != null}">
+                            Không giới hạn
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Thời gian kết thúc
+                        </div>
+
+                        <strong th:if="${coupon.endAt != null}"
+                                th:text="${#temporals.format(coupon.endAt, 'dd/MM/yyyy HH:mm')}">
+                            31/08/2026 23:59
+                        </strong>
+
+                        <strong th:unless="${coupon.endAt != null}">
+                            Không giới hạn
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Số lượt đã sử dụng
+                        </div>
+
+                        <strong class="fs-5"
+                                th:text="${coupon.usedCount ?: 0}">
+                            0
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="border rounded-3 p-3 h-100">
+                        <div class="text-muted small mb-1">
+                            Giới hạn sử dụng
+                        </div>
+
+                        <strong th:if="${coupon.usageLimit != null}"
+                                class="fs-5"
+                                th:text="${coupon.usageLimit}">
+                            100
+                        </strong>
+
+                        <strong th:unless="${coupon.usageLimit != null}"
+                                class="text-muted">
+                            Không giới hạn
+                        </strong>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="merchant-panel">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-bar-chart me-2"></i>
+                Tình trạng sử dụng
+            </h5>
+
+            <div th:if="${coupon.usageLimit != null}">
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Đã sử dụng</span>
+
+                    <strong>
+                        <span th:text="${coupon.usedCount ?: 0}">0</span>
+                        /
+                        <span th:text="${coupon.usageLimit}">100</span>
+                    </strong>
+                </div>
+
+                <div class="progress" style="height: 8px;">
+                    <div class="progress-bar"
+                         role="progressbar"
+                         th:style="'width: ' + (${coupon.usedCount ?: 0} * 100 / ${coupon.usageLimit}) + '%;'">
+                    </div>
+                </div>
+
+            </div>
+
+            <div th:unless="${coupon.usageLimit != null}"
+                 class="text-muted">
+                Coupon này không giới hạn số lượt sử dụng.
+            </div>
+        </div>
+
+    </section>
+</div>
+
+</body>
+</html>

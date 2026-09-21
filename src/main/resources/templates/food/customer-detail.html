@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${food.foodName + ' - Trưa Nay Ăn Gì'}">Chi tiết món ăn - Trưa Nay Ăn Gì</title>
+    
+    <!-- Bootstrap 5 CSS & Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .transition-hover {
+            transition: all 0.25s ease;
+        }
+        .transition-hover:hover {
+            transform: translateY(-2px);
+        }
+        .food-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.12) !important;
+        }
+        .thumb-img-container {
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .thumb-img-container:hover {
+            transform: scale(1.05);
+        }
+        .fs-7 { font-size: 0.875rem; }
+        .fs-8 { font-size: 0.8rem; }
+        .fs-9 { font-size: 0.725rem; }
+        .shadow-xs { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+    </style>
+</head>
+<body>
+
+<!-- 1. Header & Navigation -->
+<div th:replace="~{layout/navbar :: navbar}"></div>
+
+<!-- 2. Main Content Container -->
+<main class="container my-4 py-2">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb fs-7 mb-0">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="bi bi-house-door me-1"></i>Trang chủ</a></li>
+            <li class="breadcrumb-item" th:if="${food.foodCategories != null and !#lists.isEmpty(food.foodCategories)}">
+                <a th:href="@{/search(categoryId=${food.foodCategories[0].id})}" 
+                   class="text-decoration-none text-muted" 
+                   th:text="${food.foodCategories[0].categoryName}">Danh mục</a>
+            </li>
+            <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page" th:text="${food.foodName}">Tên món ăn</li>
+        </ol>
+    </nav>
+
+    <!-- Food Info Master Fragment -->
+    <div th:replace="~{food/fragments/food-info :: foodInfo}"></div>
+
+    <!-- Coupons & Offers Fragment -->
+    <div th:replace="~{food/fragments/coupon-list :: couponList}"></div>
+
+    <!-- Personalized Recommended Foods -->
+    <div th:replace="~{food/fragments/recommended-foods :: recommendedFoods}"></div>
+
+    <!-- People Also Liked Foods -->
+    <div th:replace="~{food/fragments/people-also-liked :: peopleAlsoLiked}"></div>
+</main>
+
+<!-- 3. Quick Order Offcanvas Sidebar Drawer -->
+<div class="offcanvas offcanvas-end shadow-lg" tabindex="-1" id="quickOrderOffcanvas" aria-labelledby="quickOrderOffcanvasLabel" style="width: 420px; max-width: 90vw;">
+    <div th:replace="~{food/fragments/quick-order-sidebar :: quickOrderSidebar}"></div>
+</div>
+
+<!-- 4. Footer -->
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Detail Image Gallery & Quick Order Scripts -->
+<script th:inline="javascript">
+    // Thông tin món ăn hiện tại từ model
+    const detailFood = {
+        id: /*[[${food.id}]]*/ 0,
+        name: /*[[${food.foodName}]]*/ "",
+        price: /*[[${food.price}]]*/ 0,
+        discountPrice: /*[[${food.discountPrice}]]*/ null,
+        serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0,
+        merchantId: /*[[${food.merchant != null ? food.merchant.id : ''}]]*/ "",
+        merchantName: /*[[${food.merchant != null ? food.merchant.merchantRestaurantName : ''}]]*/ "",
+        image: /*[[${foodImagesList != null && !foodImagesList.isEmpty() ? foodImagesList[0] : ''}]]*/ ""
+    };
+
+    // Danh sách ảnh từ backend
+    const galleryImages = /*[[${foodImagesList}]]*/ [];
+    let currentImageIndex = 0;
+
+    function updateMainImageByIndex(index) {
+        if (!galleryImages || galleryImages.length === 0) return;
+        if (index < 0) index = galleryImages.length - 1;
+        if (index >= galleryImages.length) index = 0;
+        currentImageIndex = index;
+
+        const mainImg = document.getElementById('mainFoodImage');
+        if (mainImg) {
+            mainImg.style.opacity = '0.4';
+            setTimeout(() => {
+                mainImg.src = galleryImages[currentImageIndex];
+                mainImg.style.opacity = '1';
+            }, 100);
+        }
+
+        // Cập nhật viền cho thumbnail
+        document.querySelectorAll('.thumb-img-container').forEach((thumb, idx) => {
+            if (idx === currentImageIndex) {
+                thumb.classList.remove('border-light');
+                thumb.classList.add('border-danger');
+            } else {
+                thumb.classList.remove('border-danger');
+                thumb.classList.add('border-light');
+            }
+        });
+    }
+
+    function changeMainImage(el, src) {
+        if (galleryImages && galleryImages.length > 0) {
+            const idx = galleryImages.indexOf(src);
+            if (idx !== -1) {
+                updateMainImageByIndex(idx);
+                return;
+            }
+        }
+        const mainImg = document.getElementById('mainFoodImage');
+        if (mainImg) {
+            mainImg.src = src;
+        }
+        document.querySelectorAll('.thumb-img-container').forEach(thumb => {
+            thumb.classList.remove('border-danger');
+            thumb.classList.add('border-light');
+        });
+        if (el) {
+            el.classList.remove('border-light');
+            el.classList.add('border-danger');
+        }
+    }
+
+    function prevDetailImage(e) {
+        if (e) e.stopPropagation();
+        updateMainImageByIndex(currentImageIndex - 1);
+    }
+
+    function nextDetailImage(e) {
+        if (e) e.stopPropagation();
+        updateMainImageByIndex(currentImageIndex + 1);
+    }
+
+    // Kết nối nút Đặt Mua Ngay & Thêm Giỏ Hàng
+    document.addEventListener('DOMContentLoaded', () => {
+        const offcanvasEl = document.getElementById('quickOrderOffcanvas');
+        const bsOffcanvas = offcanvasEl ? new bootstrap.Offcanvas(offcanvasEl) : null;
+
+        // Nút Đặt Mua Ngay -> Mở drawer với chế độ buy_now
+        const btnBuyNow = document.getElementById('btnMainAddToCart');
+        if (btnBuyNow) {
+            btnBuyNow.addEventListener('click', () => {
+                if (typeof initDrawer === 'function') {
+                    initDrawer('buy_now');
+                }
+                if (bsOffcanvas) {
+                    bsOffcanvas.show();
+                }
+            });
+        }
+
+        // Nút Thêm vào giỏ hàng -> Thêm vào global cart và hiển thị phản hồi trực tiếp
+        const btnAddToCart = document.getElementById('btnMainAddToNavbarCart');
+        if (btnAddToCart) {
+            btnAddToCart.addEventListener('click', () => {
+                if (typeof addToCartGlobal === 'function') {
+                    addToCartGlobal(detailFood);
+                } else if (typeof addToGlobalCart === 'function') {
+                    addToGlobalCart(detailFood);
+                }
+
+                // Hiệu ứng phản hồi trên nút Thêm vào giỏ hàng
+                const originalHtml = btnAddToCart.innerHTML;
+                btnAddToCart.classList.remove('btn-outline-danger');
+                btnAddToCart.classList.add('btn-success');
+                btnAddToCart.innerHTML = '<i class="bi bi-check-lg fs-6"></i><span class="text-nowrap">Đã thêm vào giỏ!</span>';
+                setTimeout(() => {
+                    btnAddToCart.classList.remove('btn-success');
+                    btnAddToCart.classList.add('btn-outline-danger');
+                    btnAddToCart.innerHTML = originalHtml;
+                }, 1500);
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

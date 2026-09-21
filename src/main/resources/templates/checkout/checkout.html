@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán đơn hàng - MealChoice</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/homepage.css}">
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        .checkout-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            padding: 24px;
+        }
+
+        .address-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .address-card:hover {
+            border-color: #cbd5e1;
+            background-color: #fcfdfe;
+        }
+
+        .address-card.selected {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .payment-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .payment-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .payment-card.selected {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .delivery-partner-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: #ffffff;
+        }
+
+        .delivery-partner-card:hover {
+            border-color: #cbd5e1;
+            background-color: #fcfdfe;
+        }
+
+        .delivery-partner-card.selected {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .payment-card.disabled-payment-method {
+            background-color: #f1f5f9;
+            opacity: 0.65;
+            cursor: not-allowed;
+            border-color: #e2e8f0;
+        }
+
+        .payment-card.disabled-payment-method:hover {
+            border-color: #e2e8f0;
+        }
+
+        .food-item-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .btn-order-submit {
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 14px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-order-submit:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <div th:replace="~{layout/navbar :: navbar}"></div>
+
+    <div class="container py-4 my-2">
+
+        <!-- BREADCRUMB -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+                <li class="breadcrumb-item active text-danger fw-semibold" aria-current="page">Thanh toán đơn hàng</li>
+            </ol>
+        </nav>
+
+        <div class="row g-4">
+
+            <!-- CỘT TRÁI: ĐỊA CHỈ, PHƯƠNG THỨC & GHI CHÚ -->
+            <div class="col-lg-7 d-flex flex-column gap-4">
+
+                <!-- 1. CHỌN ĐỊA CHỈ GIAO HÀNG -->
+                <div class="checkout-card">
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                            1. Địa chỉ giao hàng
+                        </h5>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill fw-semibold px-3"
+                            data-bs-toggle="modal" data-bs-target="#newAddressModal">
+                            <i class="bi bi-plus-lg me-1"></i>Thêm địa chỉ mới
+                        </button>
+                    </div>
+
+                    <!-- Thẻ hiển thị địa chỉ nhận hàng đã chọn -->
+                    <div id="addressSelectionWrapper">
+                        <div th:if="${#lists.isEmpty(addresses)}" id="noAddressPrompt"
+                            class="text-center py-4 text-muted bg-light rounded-4 border border-dashed">
+                            <i class="bi bi-geo fs-2 d-block text-secondary opacity-50 mb-2"></i>
+                            <p class="mb-2 fw-medium">Bạn chưa có địa chỉ nhận hàng nào đã lưu.</p>
+                            <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold"
+                                data-bs-toggle="modal" data-bs-target="#newAddressModal">
+                                <i class="bi bi-plus-circle me-1"></i>Thêm địa chỉ ngay
+                            </button>
+                        </div>
+
+                        <div th:unless="${#lists.isEmpty(addresses)}" id="activeAddressCard" class="p-3.5 rounded-4"
+                            style="background-color: #fff8f8; border: 1.5px solid #fca5a5;">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <strong id="selectedContactName" class="text-dark fs-6"
+                                        th:text="${addresses[0].contactName}">Nguyen Van An</strong>
+                                    <span class="text-muted">|</span>
+                                    <span id="selectedContactPhone" class="text-danger fw-bold"
+                                        th:text="${addresses[0].contactPhone}">0900000002</span>
+                                    <span id="selectedDefaultBadge"
+                                        class="badge bg-danger rounded-pill px-2 py-0.5 font-size-11"
+                                        th:style="${addresses[0].isDefault != null and addresses[0].isDefault ? '' : 'display:none;'}">Mặc
+                                        định</span>
+                                </div>
+                                <button type="button"
+                                    class="btn btn-link text-danger text-decoration-none fw-semibold p-0 font-size-13"
+                                    data-bs-toggle="modal" data-bs-target="#chooseAddressModal">
+                                    Thay đổi
+                                </button>
+                            </div>
+                            <div class="text-secondary font-size-14" id="selectedFullAddress"
+                                th:text="${addresses[0].street + ', ' + addresses[0].ward + ', ' + addresses[0].district + ', ' + addresses[0].city}">
+                                123 Đường Cầu Giấy, Phường Dịch Vọng, Quận Cầu Giấy, Hà Nội
+                            </div>
+                            <div id="selectedNoteContainer" class="mt-2 text-muted font-size-12 fst-italic"
+                                th:style="${addresses[0].note != null and !addresses[0].note.isBlank() ? '' : 'display:none;'}">
+                                <i class="bi bi-info-circle me-1 text-primary"></i><span id="selectedNoteText"
+                                    th:text="${addresses[0].note}">Ghi chú</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ĐƠN VỊ VẬN CHUYỂN & CƯỚC PHÍ GIAO HÀNG -->
+                <div class="checkout-card">
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+                        <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-truck text-danger fs-5"></i>
+                            2. Đơn vị vận chuyển
+                        </h5>
+                        <span id="deliveryDistanceBadge"
+                            class="badge bg-light text-dark border rounded-pill px-2.5 py-1 font-size-12">
+                            <i class="bi bi-geo-alt me-1 text-danger"></i><span id="deliveryDistanceText">Đang tính
+                                khoảng cách...</span>
+                        </span>
+                    </div>
+
+                    <!-- Danh sách đơn vị vận chuyển tải tự động từ API -->
+                    <div id="deliveryPartnersContainer" class="d-flex flex-column gap-2.5">
+                        <div id="deliveryLoadingPlaceholder" class="text-center py-3 text-muted">
+                            <span class="spinner-border spinner-border-sm text-danger me-2"></span>
+                            Đang tải cước phí từ các đơn vị giao hàng...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. PHƯƠNG THỨC THANH TOÁN -->
+                <div class="checkout-card">
+                    <h5 class="fw-bold text-dark mb-3 pb-2 border-bottom d-flex align-items-center gap-2">
+                        <i class="bi bi-wallet2 text-danger fs-5"></i>
+                        3. Phương thức thanh toán
+                    </h5>
+
+                    <div class="d-flex flex-column gap-2.5">
+                        <!-- COD -->
+                        <div class="payment-card selected d-flex justify-content-between align-items-center"
+                            id="paymentMethodCOD" data-payment="COD" onclick="selectPaymentMethod(this, 'COD')">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-cash-stack fs-4 text-success"></i>
+                                <div>
+                                    <div class="fw-bold text-dark">Thanh toán khi nhận hàng (COD)</div>
+                                    <small class="text-muted">Trả tiền mặt trực tiếp cho tài xế khi nhận đồ ăn</small>
+                                </div>
+                            </div>
+                            <input class="form-check-input" type="radio" name="paymentRadio" id="paymentRadioCOD"
+                                value="COD" checked>
+                        </div>
+
+                        <!-- CARD / Chuyển khoản -->
+                        <div class="payment-card d-flex flex-column" id="paymentMethodCARD" data-payment="CARD"
+                            onclick="selectPaymentMethod(this, 'CARD')">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="bi bi-credit-card-2-front fs-4 text-primary"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark">Thẻ tín dụng / Ghi nợ / Chuyển khoản</div>
+                                        <small class="text-muted">Thanh toán trực tuyến chuyển khoản ngân hàng</small>
+                                    </div>
+                                </div>
+                                <input class="form-check-input" type="radio" name="paymentRadio" id="paymentRadioCARD"
+                                    value="CARD">
+                            </div>
+
+                            <!-- THÔNG TIN NGÂN HÀNG QUÁN -->
+                            <div id="bankTransferInfoBox" class="mt-3 p-3 bg-light rounded-3 border font-size-13"
+                                style="display: none;">
+                                <div class="d-flex align-items-center gap-2 mb-2 text-danger fw-bold">
+                                    <i class="bi bi-bank"></i>
+                                    <span>Thông tin chuyển khoản của cửa hàng</span>
+                                </div>
+                                <div class="d-flex justify-content-between py-1.5 border-bottom">
+                                    <span class="text-muted">Ngân hàng:</span>
+                                    <strong class="text-dark" id="checkoutMerchantBankName">Vietcombank</strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-1.5 border-bottom align-items-center">
+                                    <span class="text-muted">Số tài khoản:</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong class="text-danger font-monospace fs-6"
+                                            id="checkoutMerchantBankAccount">999888777666</strong>
+                                        <button type="button"
+                                            class="btn btn-sm btn-outline-secondary py-0 px-2 font-size-11 rounded"
+                                            onclick="copyBankAccount(event)">
+                                            <i class="bi bi-clipboard me-1"></i>Sao chép
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between py-1.5 border-bottom">
+                                    <span class="text-muted">Chủ tài khoản:</span>
+                                    <span class="text-dark fw-semibold" id="checkoutMerchantOwnerName">Quán Ngon Hà
+                                        Nội</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-1.5 text-muted font-size-12">
+                                    <span>Gợi ý cú pháp:</span>
+                                    <span class="text-dark font-monospace fw-semibold">[Mã đơn hàng / SĐT người
+                                        nhận]</span>
+                                </div>
+                            </div>
+
+                            <!-- THÔNG BÁO QUÁN KHÔNG NHẬN CHUYỂN KHOẢN -->
+                            <div id="bankNotSupportedNotice" class="mt-2 text-danger font-size-12 fw-medium"
+                                style="display: none;">
+                                <i class="bi bi-exclamation-circle me-1"></i>Xin lỗi cửa hàng không nhận chuyển khoản
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. GHI CHÚ DÀNH CHO CỬA HÀNG -->
+                <div class="checkout-card">
+                    <h5 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-left-text text-danger fs-5"></i>
+                        4. Ghi chú cho cửa hàng
+                    </h5>
+                    <p class="text-muted small mb-3">Ví dụ: không hành, ít cay, để riêng nước sốt...</p>
+                    <textarea class="form-control" id="orderNoteInput" rows="2"
+                        placeholder="Nhập ghi chú cho quán nếu có..."></textarea>
+                </div>
+
+            </div>
+
+            <!-- CỘT PHẢI: THÔNG TIN CỬA HÀNG, DANH SÁCH MÓN, VOUCHER & TỔNG TIỀN -->
+            <div class="col-lg-5 d-flex flex-column gap-4">
+
+                <!-- THÔNG TIN ĐƠN HÀNG -->
+                <div class="checkout-card">
+
+                    <!-- Thông tin quán -->
+                    <div class="d-flex align-items-center gap-3 pb-3 mb-3 border-bottom">
+                        <div class="bg-danger bg-opacity-10 p-2.5 rounded-3 text-danger fs-4">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <div>
+                            <strong class="text-dark fs-6 d-block" id="checkoutMerchantName">Cửa hàng</strong>
+                            <small class="text-muted">Đang chuẩn bị các món thơm ngon cho bạn</small>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách món đặt -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold text-dark">Món đã chọn</span>
+                        <span class="badge bg-light text-dark border font-size-12" id="checkoutItemCount">0 món</span>
+                    </div>
+
+                    <div id="checkoutItemsList" class="d-flex flex-column mb-3"
+                        style="max-height: 280px; overflow-y: auto;">
+                        <!-- Render bằng checkout.js -->
+                    </div>
+
+                    <!-- Mã giảm giá (Voucher) -->
+                    <div class="mb-3">
+                        <label for="voucherSelect" class="form-label fw-bold text-dark font-size-13 mb-1.5">
+                            <i class="bi bi-ticket-perforated me-1 text-danger"></i>Mã ưu đãi / Voucher của quán
+                        </label>
+                        <select class="form-select font-size-13 py-2" id="voucherSelect">
+                            <option value="">-- Đang tải mã giảm giá... --</option>
+                        </select>
+                        <div id="voucherMessage" class="font-size-12 mt-1"></div>
+                    </div>
+
+                    <!-- Bảng tổng hợp chi phí -->
+                    <div class="border-top pt-3 mb-4 d-flex flex-column gap-2 font-size-14">
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Tiền món ăn:</span>
+                            <span id="summarySubtotal" class="text-dark fw-semibold">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary">
+                            <span>Phí vận chuyển:</span>
+                            <span id="summaryShippingFee" class="text-dark fw-semibold">15.000 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-secondary" id="summaryServiceFeeRow">
+                            <span>Phí dịch vụ:</span>
+                            <span id="summaryServiceFee" class="text-dark fw-semibold">0 đ</span>
+                        </div>
+                        <div class="d-flex justify-content-between text-success" id="summaryDiscountRow"
+                            style="display: none !important;">
+                            <span>Giảm giá ưu đãi:</span>
+                            <strong id="summaryDiscount">- 0 đ</strong>
+                        </div>
+
+                        <div class="border-top pt-3 mt-1 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold text-dark fs-6">Tổng thanh toán:</span>
+                            <span class="fw-extrabold text-danger fs-3" id="summaryTotalAmount">0 đ</span>
+                        </div>
+                    </div>
+
+                    <!-- Nút Đặt hàng -->
+                    <button type="button" class="btn btn-order-submit w-100 shadow-sm" id="btnPlaceOrder">
+                        <i class="bi bi-bag-check-fill me-2"></i>Đặt Hàng Ngay
+                    </button>
+
+                    <div class="text-center mt-2.5">
+                        <small class="text-muted font-size-12">
+                            Bằng việc nhấn Đặt hàng, bạn đồng ý với Điều khoản dịch vụ của MealChoice.
+                        </small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL CHỌN ĐỊA CHỈ KHÁC -->
+    <div class="modal fade" id="chooseAddressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-bottom pb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+                        <h5 class="modal-title fw-bold text-dark mb-0">Chọn địa chỉ nhận hàng</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3" style="max-height: 420px; overflow-y: auto;">
+                    <div class="d-flex flex-column gap-2.5" id="modalAddressList">
+                        <div th:each="addr, iterStat : ${addresses}"
+                            class="address-modal-card p-3 rounded-3 border d-flex justify-content-between align-items-start gap-3"
+                            style="cursor: pointer; transition: all 0.2s ease;"
+                            th:classappend="${addr.isDefault != null and addr.isDefault} ? 'border-danger bg-danger-subtle selected' : (${iterStat.first} ? 'border-danger bg-danger-subtle selected' : 'border-light-subtle bg-white')"
+                            th:data-id="${addr.id}" th:data-name="${addr.contactName}"
+                            th:data-phone="${addr.contactPhone}"
+                            th:data-address="${addr.street + ', ' + addr.ward + ', ' + addr.district + ', ' + addr.city}"
+                            th:data-note="${addr.note != null ? addr.note : ''}"
+                            th:data-default="${addr.isDefault != null ? addr.isDefault : false}"
+                            onclick="selectModalAddress(this)">
+                            <div class="d-flex align-items-start gap-3">
+                                <div class="form-check pt-1 pe-0">
+                                    <input class="form-check-input modal-address-radio" type="radio"
+                                        name="modalAddressRadio"
+                                        th:checked="${addr.isDefault != null and addr.isDefault} ? true : (${iterStat.first} ? true : false)">
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center flex-wrap gap-2 mb-1">
+                                        <strong class="text-dark fs-6" th:text="${addr.contactName}">Nguyễn Văn
+                                            A</strong>
+                                        <span class="text-muted">|</span>
+                                        <span class="text-danger fw-semibold"
+                                            th:text="${addr.contactPhone}">0900000000</span>
+                                        <span th:if="${addr.isDefault}"
+                                            class="badge bg-danger rounded-pill px-2 py-0.5 font-size-11">Mặc
+                                            định</span>
+                                    </div>
+                                    <div class="text-secondary small mt-1">
+                                        <i class="bi bi-geo-alt me-1 text-danger"></i>
+                                        <span
+                                            th:text="${addr.street + ', ' + addr.ward + ', ' + addr.district + ', ' + addr.city}">Địa
+                                            chỉ chi tiết</span>
+                                    </div>
+                                    <div th:if="${addr.note != null and !addr.note.isBlank()}"
+                                        class="text-muted font-size-12 fst-italic mt-1.5 bg-light p-1.5 rounded-2">
+                                        <i class="bi bi-info-circle me-1 text-primary"></i><span
+                                            th:text="${addr.note}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-semibold"
+                        data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#newAddressModal">
+                        <i class="bi bi-plus-lg me-1"></i>Thêm địa chỉ mới
+                    </button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-light rounded-pill px-3.5"
+                            data-bs-dismiss="modal">Đóng</button>
+                        <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold"
+                            onclick="confirmAddressSelection()">Xác nhận</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL THÊM ĐỊA CHỈ MỚI -->
+    <div class="modal fade" id="newAddressModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark">Thêm địa chỉ nhận hàng</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <form id="newAddressForm">
+                        <div class="row g-2.5">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-semibold">Tên người nhận *</label>
+                                <input type="text" class="form-control" id="modalContactName" required
+                                    placeholder="Nguyễn Văn A" th:value="${user != null ? user.displayName : ''}">
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-semibold">Số điện thoại *</label>
+                                <input type="tel" class="form-control" id="modalContactPhone" required
+                                    placeholder="0901234567" th:value="${user != null ? user.phoneNumber : ''}">
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-semibold">Tỉnh/Thành phố *</label>
+                                <select class="form-select rounded-3" id="modalCity" required>
+                                    <option value="" selected disabled>Tỉnh/Thành phố</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-semibold">Quận/Huyện *</label>
+                                <select class="form-select rounded-3" id="modalDistrict" required disabled>
+                                    <option value="" selected disabled>Quận/Huyện</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <label class="form-label small fw-semibold">Phường/Xã *</label>
+                                <select class="form-select rounded-3" id="modalWard" required disabled>
+                                    <option value="" selected disabled>Phường/Xã</option>
+                                </select>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <label class="form-label small fw-semibold">Địa chỉ chi tiết (Số nhà, ngõ/đường)
+                                    *</label>
+                                <input type="text" class="form-control" id="modalStreet" required
+                                    placeholder="Số 12 Ngõ 68 Cầu Giấy">
+                            </div>
+                            <div class="col-12 mb-2">
+                                <label class="form-label small fw-semibold">Ghi chú (Tùy chọn)</label>
+                                <input type="text" class="form-control" id="modalNote"
+                                    placeholder="Cổng màu xanh, gọi trước khi tới...">
+                            </div>
+                            <div class="col-12 mt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="modalIsDefault" checked>
+                                    <label class="form-check-label small fw-medium text-dark" for="modalIsDefault">
+                                        Đặt làm địa chỉ nhận hàng mặc định
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-danger rounded-pill px-4 fw-semibold" id="btnSaveAddress">Lưu
+                        địa chỉ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div th:replace="~{layout/footer :: footer}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/navbar.js}"></script>
+    <script th:src="@{/js/checkout.js}"></script>
+
+</body>
+
+</html>

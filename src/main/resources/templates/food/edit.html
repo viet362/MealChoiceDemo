@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa món ăn - Merchant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+<body class="merchant-page" data-food-mode="edit">
+<div th:replace="~{merchant/layout :: shell('Chỉnh sửa món ăn', 'foods', ~{::content})}">
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Chỉnh sửa món ăn</h2>
+                <p class="text-muted mb-0 font-size-14" th:text="'Đang cập nhật thông tin cho món: ' + ${food.foodName}">
+                    Cập nhật thông tin món ăn hiện có.
+                </p>
+            </div>
+            <a th:href="@{/merchant/foods/{id}(id=${food.id})}" class="btn btn-outline-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2">
+                <i class="bi bi-arrow-left"></i>
+                <span>Hủy</span>
+            </a>
+        </div>
+
+        <form id="foodEditForm" th:data-food-id="${food.id}" enctype="multipart/form-data">
+            <div class="row g-4">
+                <div class="col-lg-7 d-flex flex-column gap-4">
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-info-circle text-danger me-2"></i>Thông tin cơ bản
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="foodName" class="form-label fw-semibold">
+                                Tên món ăn <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" id="foodName" name="foodName" class="form-control form-control-lg bg-light border-0" th:value="${food.foodName}" placeholder="Ví dụ: Cơm gà xối mỡ" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="merchantAddressId" class="form-label fw-semibold">
+                                Địa chỉ cửa hàng <span class="text-danger">*</span>
+                            </label>
+                            <select id="merchantAddressId" name="merchantAddressId" class="form-select form-select-lg bg-light border-0" required>
+                                <option value="">-- Chọn địa chỉ --</option>
+                                <option th:each="address : ${addresses}"
+                                        th:value="${address.id}"
+                                        th:text="${address.merchantAddress}"
+                                        th:selected="${address.id == food.merchantAddressId}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">
+                                Danh mục món ăn <span class="text-danger">*</span>
+                            </label>
+                            <div class="multi-select" id="categorySelector">
+                                <button type="button" class="multi-select-toggle" aria-expanded="false">
+                                    <span class="multi-select-selected">Chọn danh mục món ăn</span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
+                                <div class="multi-select-menu">
+                                    <input type="text" class="form-control multi-select-search" placeholder="Tìm danh mục..." autocomplete="off">
+                                    <div class="multi-select-list">
+                                        <div th:each="category : ${categories}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${category.categoryName}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="categoryIds"
+                                                       th:value="${category.id}"
+                                                       th:id="'category_' + ${category.id}"
+                                                       th:checked="${food.categoryIds != null and food.categoryIds.contains(category.id)}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'category_' + ${category.id}"
+                                                       th:text="${category.categoryName}">
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="multi-select-empty d-none">Không tìm thấy danh mục.</div>
+                                    </div>
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text font-size-12 mt-1">Có thể chọn nhiều danh mục cho cùng một món ăn.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Tag món ăn</label>
+                            <div class="multi-select" id="tagSelector">
+                                <button type="button" class="multi-select-toggle" aria-expanded="false">
+                                    <span class="multi-select-selected">Chọn tag</span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
+                                <div class="multi-select-menu">
+                                    <input type="text" class="form-control multi-select-search" placeholder="Tìm tag..." autocomplete="off">
+                                    <div class="multi-select-list">
+                                        <div th:each="tag : ${tags}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${tag.tagName}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="tagIds"
+                                                       th:value="${tag.id}"
+                                                       th:id="'tag_' + ${tag.id}"
+                                                       th:checked="${food.tagIds != null and food.tagIds.contains(tag.id)}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'tag_' + ${tag.id}"
+                                                       th:text="${tag.tagName}">
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="multi-select-empty d-none">Không tìm thấy tag.</div>
+                                    </div>
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text font-size-12 mt-1">Có thể chọn nhiều tag cho món ăn. Không bắt buộc.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Coupon áp dụng cho món ăn</label>
+                            <div class="multi-select" id="couponSelector">
+                                <button type="button" class="multi-select-toggle" aria-expanded="false">
+                                    <span class="multi-select-selected">Chọn coupon</span>
+                                    <i class="bi bi-chevron-down arrow"></i>
+                                </button>
+                                <div class="multi-select-menu">
+                                    <input type="text" class="form-control multi-select-search" placeholder="Tìm coupon..." autocomplete="off">
+                                    <div class="multi-select-list">
+                                        <div th:each="coupon : ${coupons}"
+                                             class="multi-select-item"
+                                             th:attr="data-label=${coupon.couponCode}">
+                                            <div class="form-check">
+                                                <input class="form-check-input multi-select-checkbox"
+                                                       type="checkbox"
+                                                       name="couponIds"
+                                                       th:value="${coupon.id}"
+                                                       th:id="'coupon_' + ${coupon.id}"
+                                                       th:checked="${food.couponIds != null and food.couponIds.contains(coupon.id)}">
+                                                <label class="form-check-label w-100"
+                                                       th:for="'coupon_' + ${coupon.id}"
+                                                       th:text="${coupon.couponCode}">
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="multi-select-empty d-none">Không tìm thấy coupon.</div>
+                                    </div>
+                                    <div class="multi-select-footer">
+                                        Đã chọn: <strong class="selected-count">0</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="preparationTime" class="form-label fw-semibold">
+                                Thời gian chuẩn bị <span class="text-danger">*</span>
+                            </label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="number" id="preparationTime" name="preparationTime" class="form-control bg-light border-0" min="0" th:value="${food.preparationTime}" style="max-width: 140px; height: 42px;" placeholder="20" required>
+                                <span class="text-muted fw-semibold">phút</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="foodNote" class="form-label fw-semibold">Mô tả / Ghi chú món ăn</label>
+                            <textarea id="foodNote" name="foodNote" class="form-control bg-light border-0" rows="4" th:text="${food.foodNote}" placeholder="Mô tả chi tiết về thành phần, hương vị..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 d-flex flex-column gap-4">
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-tag text-danger me-2"></i>Giá & Phí dịch vụ
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="price" class="form-label fw-semibold">
+                                Giá bán chính thức <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <input type="number" id="price" name="price" class="form-control bg-light border-0" min="0" step="0.01" th:value="${food.price}" placeholder="50000" required>
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discountType" class="form-label fw-semibold">
+                                Hình thức giảm giá <span class="text-danger">*</span>
+                            </label>
+                            <select id="discountType" name="discountType" class="form-select bg-light border-0" required>
+                                <option value="NONE" th:selected="${food.discountType == null or food.discountType.name() == 'NONE'}">Không giảm giá</option>
+                                <option value="FIXED_PRICE" th:selected="${food.discountType != null and food.discountType.name() == 'FIXED_PRICE'}">Giá sau giảm</option>
+                                <option value="PERCENT" th:selected="${food.discountType != null and food.discountType.name() == 'PERCENT'}">Phần trăm (%)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3 d-none" id="discountValueGroup">
+                            <label for="discountValue" id="discountValueLabel" class="form-label fw-semibold">Mức giảm</label>
+                            <div class="input-group">
+                                <input type="number" id="discountValue" name="discountValue" class="form-control bg-light border-0" min="0" step="0.01">
+                                <span id="discountUnit" class="input-group-text bg-light border-0 text-muted fw-semibold">%</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="discountPrice" class="form-label fw-semibold">Giá sau khuyến mãi</label>
+                            <div class="input-group">
+                                <input type="number" id="discountPrice" name="discountPrice" class="form-control bg-light border-0" min="0" step="0.01">
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="serviceFee" class="form-label fw-semibold">Phí dịch vụ</label>
+                            <div class="input-group">
+                                <input type="number" id="serviceFee" name="serviceFee" class="form-control bg-light border-0" min="0" step="0.01" th:value="${food.serviceFee}" placeholder="0">
+                                <span class="input-group-text bg-light border-0 text-muted fw-semibold">vnđ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="merchant-page-card p-4">
+                        <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom">
+                            <i class="bi bi-images text-danger me-2"></i>Hình ảnh món ăn
+                        </h5>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-muted font-size-14">Ảnh đang sử dụng</label>
+                            <div id="existingImages" class="d-flex flex-wrap gap-3">
+                                <div th:if="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}"
+                                     th:each="imageUrl : ${food.imageUrls}"
+                                     class="existing-image position-relative border rounded-3 overflow-hidden bg-light shadow-sm"
+                                     style="width: 90px; height: 90px;">
+                                    <img th:src="${imageUrl}" alt="Ảnh món ăn" class="w-100 h-100 object-fit-cover">
+                                    <button type="button"
+                                            class="remove-image-btn btn btn-danger btn-sm position-absolute top-0 end-0 rounded-circle d-flex align-items-center justify-content-center"
+                                            th:data-image-url="${imageUrl}"
+                                            style="width: 24px; height: 24px; padding: 0; transform: translate(25%, -25%);">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+
+                                <div th:if="${food.imageUrls == null or #lists.isEmpty(food.imageUrls)}"
+                                     id="noExistingImages"
+                                     class="text-muted small p-3 bg-light w-100 text-center rounded-3">
+                                    Chưa có hình ảnh nào cho món này.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="images" class="form-label fw-semibold">Tải lên ảnh mới</label>
+                            <div id="imageDropZone" class="border border-2 border-dashed rounded-3 p-4 text-center bg-light bg-opacity-50">
+                                <i class="bi bi-cloud-arrow-up fs-2 text-danger d-block mb-2"></i>
+                                <p class="fw-semibold mb-1">Chọn hoặc kéo thả ảnh vào đây</p>
+                                <p class="text-muted small mb-3">Hỗ trợ định dạng JPG, JPEG, PNG hoặc WEBP</p>
+                                <input type="file" id="images" name="images" class="form-control form-control-sm bg-white" accept=".jpg,.jpeg,.png,.webp" multiple>
+                            </div>
+                            <div id="imagePreview" class="d-flex flex-wrap gap-3 mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                <a th:href="@{/merchant/foods/{id}(id=${food.id})}" class="btn btn-light rounded-pill px-4 py-2 fw-semibold border">Hủy</a>
+                <button type="submit" id="submitButton" class="btn btn-danger rounded-pill px-5 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                    <i class="bi bi-check-lg"></i>
+                    <span>Lưu thay đổi</span>
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script th:inline="javascript">
+    window.foodEditData = {
+        discountPrice: /*[[${food.discountPrice}]]*/ null,
+        discountValue: /*[[${food.discountValue}]]*/ null
+    };
+</script>
+<script th:src="@{/js/merchant-food.js}"></script>
+</body>
+</html>

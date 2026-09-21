@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi tiết món ăn - Merchant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+    <style>
+        .btn-img-nav {
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(4px);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .btn-img-nav:hover {
+            background: rgba(220, 38, 38, 0.85);
+            color: #ffffff;
+            border-color: transparent;
+            transform: translateY(-50%) scale(1.08) !important;
+        }
+    </style>
+</head>
+
+<body class="merchant-page">
+
+<div th:replace="~{merchant/layout :: shell('Chi tiết món ăn', 'foods', ~{::content})}">
+
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+        <!-- HEADER & ĐIỀU HƯỚNG MÓN ÁN -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+            <div>
+                <div class="text-uppercase text-muted small fw-semibold mb-2">
+                    Merchant / Món ăn
+                </div>
+                <h2 class="fw-bold mb-1" th:text="${food.foodName}">Tên món ăn</h2>
+                <p class="merchant-section-subtitle mb-0">Xem thông tin chi tiết của món ăn đang quản lý.</p>
+            </div>
+
+            <!-- Cụm nút điều hướng món ăn -->
+            <div class="d-flex align-items-center gap-2">
+                <!-- Xóa -->
+                <button type="button"
+                        id="btnDeleteFood"
+                        class="btn btn-outline-danger rounded-pill px-3"
+                        title="Xóa món ăn">
+                    <i class="bi bi-trash me-1"></i>
+                    Xóa
+                </button>
+
+                <!-- Chỉnh sửa -->
+                <a th:href="@{/merchant/foods/{id}/edit(id=${food.id})}"
+                   class="btn btn-danger rounded-pill px-3 ms-1 fw-semibold">
+                    <i class="bi bi-pencil me-1"></i>
+                    Chỉnh sửa
+                </a>
+
+                <!-- Danh sách -->
+                <a href="/merchant/foods"
+                   class="btn btn-outline-secondary rounded-pill px-4 ms-1">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Danh sách
+                </a>
+
+            </div>
+        </div>
+
+        <!-- MAIN DETAIL CARD -->
+        <div class="merchant-page-card p-4 p-lg-5">
+            <div class="row g-4">
+                <!-- CỘT TRÁI: HÌNH ẢNH -->
+                <div class="col-lg-5">
+                    <div th:if="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}">
+                        <div class="position-relative rounded-4 overflow-hidden bg-light border mb-3" style="height: 380px;">
+                            <button type="button" id="prevFoodImage" class="btn btn-img-nav position-absolute top-50 start-0 translate-middle-y rounded-circle ms-3" style="z-index: 2;" aria-label="Ảnh trước">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+
+                            <img id="mainFoodImage" th:src="${food.imageUrls[0]}" alt="Ảnh món ăn" class="w-100 h-100 object-fit-contain" style="cursor: zoom-in;" data-bs-toggle="modal" data-bs-target="#foodImageModal">
+
+                            <button type="button" id="nextFoodImage" class="btn btn-img-nav position-absolute top-50 end-0 translate-middle-y rounded-circle me-3" style="z-index: 2;" aria-label="Ảnh tiếp theo">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="row g-2">
+                            <div th:each="imageUrl, stat : ${food.imageUrls}" class="col-3">
+                                <button type="button" class="food-thumbnail border rounded-3 overflow-hidden p-0 bg-light w-100" th:classappend="${stat.index == 0 ? 'active' : ''}" th:attr="data-index=${stat.index}" style="height: 75px;">
+                                    <img th:src="${imageUrl}" alt="Ảnh món ăn" class="w-100 h-100 object-fit-contain">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:unless="${food.imageUrls != null and !#lists.isEmpty(food.imageUrls)}" class="rounded-4 overflow-hidden bg-light border d-flex align-items-center justify-content-center text-muted" style="min-height: 380px;">
+                        <div class="text-center">
+                            <i class="bi bi-image fs-1 d-block mb-2"></i> Chưa có ảnh
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI: THÔNG TIN CHÍNH -->
+                <div class="col-lg-7 d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- GIÁ BÁN -->
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+                            <span class="badge text-bg-danger rounded-pill px-3 py-2 fs-6">
+                                <i class="bi bi-coin me-1"></i>
+                                <span th:text="${#numbers.formatDecimal(food.price, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 vnđ</span>
+                            </span>
+
+                            <span th:if="${food.discountPrice != null}" class="badge text-bg-success rounded-pill px-3 py-2 fs-6">
+                                <i class="bi bi-tag me-1"></i>
+                                <span th:text="${#numbers.formatDecimal(food.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 vnđ</span>
+                            </span>
+
+                            <span class="badge text-bg-light border text-dark rounded-pill px-3 py-2">
+                                <i class="bi bi-receipt me-1"></i> Phí dịch vụ:
+                                <span th:text="${food.serviceFee != null ? #numbers.formatDecimal(food.serviceFee, 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</span>
+                            </span>
+
+                            <span class="badge text-bg-light border text-dark rounded-pill px-3 py-2">
+                                <i class="bi bi-clock me-1"></i>
+                                <span th:text="${food.preparationTime != null ? food.preparationTime + ' phút' : '-'}">-</span>
+                            </span>
+                        </div>
+
+                        <!-- ĐỊA CHỈ & DANH MỤC -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <div class="merchant-stat h-100">
+                                    <div class="label">Địa chỉ</div>
+                                    <div class="fw-semibold mt-1" th:text="${food.merchantAddress != null ? food.merchantAddress : 'Chưa cập nhật'}">Chưa cập nhật</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="merchant-stat h-100">
+                                    <div class="label">Danh mục</div>
+                                    <div class="fw-semibold mt-1">
+                                        <span th:if="${food.categoryNames != null and !#lists.isEmpty(food.categoryNames)}" th:text="${#strings.listJoin(food.categoryNames, ', ')}">Dinner</span>
+                                        <span th:unless="${food.categoryNames != null and !#lists.isEmpty(food.categoryNames)}">Chưa có danh mục</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAGS -->
+                        <div class="mb-4">
+                            <div class="label text-muted fw-semibold small mb-2">TAGS</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <span th:if="${food.tagNames != null and !#lists.isEmpty(food.tagNames)}" th:each="tagName : ${food.tagNames}" class="badge text-bg-light border text-dark rounded-pill px-3 py-2">
+                                    <i class="bi bi-hash me-1"></i>
+                                    <span th:text="${tagName}">Tag</span>
+                                </span>
+                                <span th:unless="${food.tagNames != null and !#lists.isEmpty(food.tagNames)}" class="text-muted small">Chưa có tag</span>
+                            </div>
+                        </div>
+
+                        <!-- GHI CHÚ -->
+                        <div class="mb-0">
+                            <div class="label text-muted fw-semibold small mb-2">GHI CHÚ MÓN ÁN</div>
+                            <p class="text-secondary mb-0" th:text="${food.foodNote != null and !food.foodNote.isBlank() ? food.foodNote : 'Không có ghi chú cho món ăn này.'}">Không có ghi chú cho món ăn này.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 opacity-50">
+
+            <!-- THỐNG KÊ & THỜI GIAN -->
+            <div class="row g-3">
+                <div class="col-md-3 col-6">
+                    <div class="merchant-stat">
+                        <div class="label">Lượt xem</div>
+                        <div class="value" th:text="${food.views}">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="merchant-stat">
+                        <div class="label">Đơn hàng</div>
+                        <div class="value" th:text="${food.orderCount}">0</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="merchant-stat">
+                        <div class="label">Đề xuất</div>
+                        <div class="value" th:text="${food.isRecommended ? 'Có' : 'Không'}">Không</div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="merchant-stat">
+                        <div class="label">Ngày tạo / Cập nhật</div>
+                        <div class="fw-semibold mt-1 small" th:text="${food.createdAt != null ? #temporals.format(food.createdAt, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
+                        <div class="text-muted small" th:text="${food.updatedAt != null ? #temporals.format(food.updatedAt, 'dd/MM/yyyy HH:mm') : '-'}">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- MODAL XEM ẢNH -->
+<div class="modal fade" id="foodImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body position-relative text-center p-2">
+                <button type="button" id="modalPrevFoodImage" class="btn btn-img-nav position-absolute top-50 start-0 translate-middle-y rounded-circle ms-3" aria-label="Ảnh trước">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+
+                <img id="modalFoodImage" src="" alt="Ảnh món ăn" class="img-fluid" style="max-height: 80vh; object-fit: contain;">
+
+                <button type="button" id="modalNextFoodImage" class="btn btn-img-nav position-absolute top-50 end-0 translate-middle-y rounded-circle me-3" aria-label="Ảnh tiếp theo">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    // --- 2. LOGIC BỘ CẢNH GALLERY ẢNH MÓN ÁN ---
+    const foodImages = /*[[${food.imageUrls}]]*/ [];
+    let currentImageIndex = 0;
+    const mainFoodImage = document.getElementById("mainFoodImage");
+    const modalFoodImage = document.getElementById("modalFoodImage");
+    const thumbnails = document.querySelectorAll(".food-thumbnail");
+
+    function showFoodImage(index) {
+        if (!foodImages.length) return;
+        currentImageIndex = (index + foodImages.length) % foodImages.length;
+        if (mainFoodImage) mainFoodImage.src = foodImages[currentImageIndex];
+        thumbnails.forEach((thumbnail, thumbnailIndex) => {
+            thumbnail.classList.toggle("active", thumbnailIndex === currentImageIndex);
+        });
+    }
+
+    function showModalFoodImage() {
+        if (!modalFoodImage || !foodImages.length) return;
+        modalFoodImage.src = foodImages[currentImageIndex];
+    }
+
+    thumbnails.forEach((thumbnail) => {
+        thumbnail.addEventListener("click", () => showFoodImage(Number(thumbnail.dataset.index)));
+    });
+
+    document.getElementById("prevFoodImage")?.addEventListener("click", () => showFoodImage(currentImageIndex - 1));
+    document.getElementById("nextFoodImage")?.addEventListener("click", () => showFoodImage(currentImageIndex + 1));
+    mainFoodImage?.addEventListener("click", () => showModalFoodImage());
+
+    document.getElementById("modalPrevFoodImage")?.addEventListener("click", () => {
+        showFoodImage(currentImageIndex - 1);
+        showModalFoodImage();
+    });
+    document.getElementById("modalNextFoodImage")?.addEventListener("click", () => {
+        showFoodImage(currentImageIndex + 1);
+        showModalFoodImage();
+    });
+
+    // --- 3. LOGIC XÓA MÓN ĂN VỚI MODAL XÁC NHẬN ---
+    const foodId = /*[[${food.id}]]*/ null;
+    const foodName = /*[[${food.foodName}]]*/ 'món ăn này';
+    const deleteModalEl = document.getElementById('deleteFoodModal');
+    const deleteModal = deleteModalEl && typeof bootstrap !== 'undefined' ? new bootstrap.Modal(deleteModalEl) : null;
+    const confirmDeleteBtn = document.getElementById('confirmDeleteFoodBtn');
+
+    document.getElementById('btnDeleteFood')?.addEventListener('click', function () {
+        if (deleteModal) {
+            deleteModal.show();
+        } else if (confirm(`Bạn có chắc chắn muốn xóa món "${foodName}" không?`)) {
+            executeDeleteFood();
+        }
+    });
+
+    confirmDeleteBtn?.addEventListener('click', async function () {
+        const originalHtml = confirmDeleteBtn.innerHTML;
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xóa...';
+
+        await executeDeleteFood();
+
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.innerHTML = originalHtml;
+        if (deleteModal) deleteModal.hide();
+    });
+
+    async function executeDeleteFood() {
+        const token = localStorage.getItem('accessToken');
+
+        try {
+            const response = await fetch(`/api/merchant/foods/${foodId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                window.showMerchantNotice?.({
+                    variant: 'danger',
+                    title: 'Phiên đăng nhập',
+                    message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                });
+                window.location.href = '/login';
+                return;
+            }
+
+            if (!response.ok) {
+                let message = 'Không thể xóa món ăn.';
+                try {
+                    const errorData = await response.json();
+                    if (errorData.message) message = errorData.message;
+                } catch (e) {
+                    console.error(e);
+                }
+                window.showMerchantNotice?.({
+                    variant: 'danger',
+                    title: 'Xóa thất bại',
+                    message: message
+                });
+                return;
+            }
+
+            window.showMerchantNotice?.({
+                variant: 'success',
+                title: 'Xóa món ăn thành công',
+                message: 'Đã xóa món ăn thành công. Đang quay lại danh sách món...'
+            });
+
+            setTimeout(() => {
+                window.location.href = '/merchant/foods';
+            }, 800);
+
+        } catch (error) {
+            console.error('Delete food error:', error);
+            window.showMerchantNotice?.({
+                variant: 'danger',
+                title: 'Có lỗi xảy ra',
+                message: 'Không thể kết nối đến máy chủ.'
+            });
+        }
+    }
+</script>
+
+<!-- MODAL XÁC NHẬN XÓA MÓN ĂN -->
+<div class="modal fade" id="deleteFoodModal" tabindex="-1" aria-labelledby="deleteFoodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3 d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded-circle" style="width: 68px; height: 68px;">
+                    <i class="bi bi-trash3-fill fs-2"></i>
+                </div>
+                <h5 class="fw-bold text-dark mb-2" id="deleteFoodModalLabel">Xác nhận xóa món ăn</h5>
+                <p class="text-muted small mb-4">
+                    Bạn có chắc chắn muốn xóa món <strong class="text-dark" th:text="'&quot;' + ${food.foodName} + '&quot;'">"Tên món"</strong> không? Hành động này sẽ gỡ món khỏi thực đơn hiện tại của quán.
+                </p>
+                <div class="d-flex align-items-center justify-content-center gap-2">
+                    <button type="button" class="btn btn-light rounded-pill px-4 py-2 fw-semibold text-secondary" data-bs-dismiss="modal">
+                        Hủy bỏ
+                    </button>
+                    <button type="button" id="confirmDeleteFoodBtn" class="btn btn-danger rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-trash"></i>
+                        <span>Xác nhận xóa</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

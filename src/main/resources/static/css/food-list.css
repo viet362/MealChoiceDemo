@@ -1,0 +1,96 @@
+/* ====================================================================
+   MERCHANT DASHBOARD & TABLE EXTENSIONS
+   ==================================================================== */
+
+/* Custom Font Utilities */
+.font-size-12 { font-size: 0.75rem !important; }
+.font-size-13 { font-size: 0.8125rem !important; }
+.font-size-14 { font-size: 0.875rem !important; }
+
+/* Merchant Page Container Card */
+.merchant-page-card {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+/* Merchant Table Reset & Layout Fixes */
+.table {
+    vertical-align: middle;
+    margin-bottom: 0;
+}
+
+/* Fix header chữ bị to, vỡ dòng & ép hiển thị trên 1 dòng */
+.table thead th {
+    font-size: 0.75rem; /* 12px chuẩn cho admin table */
+    font-weight: 700;
+    color: #6c757d;
+    letter-spacing: 0.5px;
+    white-space: nowrap; /* Không cho chữ tự động xuống dòng */
+    background-color: #f8f9fa;
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+}
+
+/* Tối ưu padding hàng dữ liệu */
+.table tbody td {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+    white-space: nowrap; /* Giữ các ô giá, button không bị rớt dòng */
+}
+
+/* Ngoại lệ: Cho phép ô tên món & note có thể rớt dòng hoặc cắt bớt */
+.table tbody td .food-name {
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Xử lý thanh cuộn bảng mượt mà hơn nếu màn hình quá nhỏ */
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+}
+
+/* Đảm bảo bảng có đủ không gian cho 13 cột */
+.food-row td {
+    min-height: 72px;
+}
+
+/* Địa chỉ món ăn */
+.food-row .food-address {
+    max-width: 220px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+/* Giờ mở cửa */
+.food-row .food-opening-hours {
+    min-width: 110px;
+}
+
+/* Mã giảm giá */
+.food-row .food-voucher {
+    min-width: 120px;
+}
+
+/* Phí dịch vụ */
+.food-row .food-service-fee {
+    min-width: 120px;
+}
+
+/* Lượt xem / lượt đặt */
+.food-row .food-statistics {
+    min-width: 140px;
+}
+
+/* Không để nội dung thống kê bị xuống dòng */
+.food-row .food-statistics span {
+    white-space: nowrap;
+}

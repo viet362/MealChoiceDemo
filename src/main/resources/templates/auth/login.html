@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập / Đăng Ký - Trưa nay ăn gì</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            border: none;
+            border-radius: 1.25rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .btn-danger {
+            background-color: #e23744;
+            border-color: #e23744;
+        }
+
+        .btn-danger:hover {
+            background-color: #d02b37;
+            border-color: #d02b37;
+        }
+
+        .nav-pills .nav-link {
+            color: #6c757d;
+            font-weight: 600;
+            border-radius: 0.75rem;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #e23744;
+            color: #fff;
+        }
+
+        .social-btn {
+            border: 1px solid #dee2e6;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .social-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #ced4da;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-12 d-flex justify-content-center">
+            <div class="card login-card p-4 p-sm-5 bg-white">
+
+                <!-- Logo & Brand Header -->
+                <div class="text-center mb-4">
+                    <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-geo-alt-fill fs-2 text-danger"></i>
+                        <span class="fs-3 fw-bold text-danger">Trưa nay ăn gì</span>
+                    </a>
+                    <p class="text-muted small">Khám phá món ngon & giao hàng siêu tốc</p>
+                </div>
+
+                <!-- Container cho Thông báo Lỗi / Thành công -->
+                <div id="alertContainer" class="mb-3 d-none">
+                    <div id="alertMessage" class="alert alert-dismissible fade show small" role="alert">
+                        <span id="alertText"></span>
+                        <button type="button" class="btn-close" onclick="hideAlert()"></button>
+                    </div>
+                </div>
+
+                <!-- Nav Tabs (Đăng nhập / Đăng ký) -->
+                <ul class="nav nav-pills nav-justified mb-4 bg-light p-1 rounded-3" id="authTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="login-tab" data-bs-toggle="pill"
+                                data-bs-target="#login-panel" type="button" role="tab" onclick="hideAlert()">Đăng
+                            Nhập</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="register-tab" data-bs-toggle="pill"
+                                data-bs-target="#register-panel" type="button" role="tab" onclick="hideAlert()">Đăng
+                            Ký</button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="authTabContent">
+
+                    <!-- 1. FORM ĐĂNG NHẬP -->
+                    <div class="tab-pane fade show active" id="login-panel" role="tabpanel">
+                        <!-- Quick Demo Credentials Banner -->
+                        <div class="p-2 mb-3 rounded-3 border bg-light">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge bg-danger">Demo Review</span>
+                                <small class="text-muted fw-semibold">Chọn tài khoản mẫu:</small>
+                            </div>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-danger flex-fill py-1 small fw-semibold" onclick="fillDemo('admin@gmail.com', '123456')">Admin</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary flex-fill py-1 small fw-semibold" onclick="fillDemo('merchant1@gmail.com', '123456')">Quán ăn</button>
+                                <button type="button" class="btn btn-sm btn-outline-success flex-fill py-1 small fw-semibold" onclick="fillDemo('anh2k3le@gmail.com', '123456')">Khách hàng</button>
+                            </div>
+                        </div>
+
+                        <form id="loginForm" onsubmit="handleLogin(event)">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label small fw-semibold">Địa chỉ Email</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control bg-light border-start-0" id="loginEmail"
+                                           placeholder="name@example.com" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label for="loginPassword" class="form-label small fw-semibold mb-0">Mật
+                                        khẩu</label>
+                                    <a href="#" class="text-danger small text-decoration-none">Quên mật khẩu?</a>
+                                </div>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control bg-light border-start-0"
+                                           id="loginPassword" placeholder="••••••••" required>
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label small text-muted" for="rememberMe">
+                                    Ghi nhớ đăng nhập
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100 py-2.5 rounded-3 fw-bold mb-3">
+                                Đăng Nhập
+                            </button>
+                        </form>
+
+                        <div class="position-relative text-center my-4">
+                            <hr class="text-muted">
+                            <span
+                                    class="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">Hoặc
+                                    đăng nhập với</span>
+                        </div>
+
+                        <!-- Social Login Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="button"
+                                    class="btn social-btn w-50 d-flex align-items-center justify-content-center gap-2 py-2">
+                                <i class="bi bi-google text-danger"></i>
+                                <span class="small fw-semibold">Google</span>
+                            </button>
+                            <button type="button"
+                                    class="btn social-btn w-50 d-flex align-items-center justify-content-center gap-2 py-2">
+                                <i class="bi bi-facebook text-primary"></i>
+                                <span class="small fw-semibold">Facebook</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 2. FORM ĐĂNG KÝ -->
+                    <div class="tab-pane fade" id="register-panel" role="tabpanel">
+                        <form id="registerForm" onsubmit="handleRegister(event)">
+                            <div class="mb-3">
+                                <label for="regName" class="form-label small fw-semibold">Tên hiển thị (*)</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-person"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0" id="regName"
+                                           placeholder="Nguyễn Văn A" maxlength="30" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="regEmail" class="form-label small fw-semibold">Địa chỉ Email (*)</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control bg-light border-start-0" id="regEmail"
+                                           placeholder="name@example.com" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="regPhone" class="form-label small fw-semibold">Số điện thoại (*)</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-telephone"></i></span>
+                                    <input type="tel" class="form-control bg-light border-start-0" id="regPhone"
+                                           placeholder="0912345678" pattern="^(0|\+84)[35789][0-9]{8}$" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="regPassword" class="form-label small fw-semibold">Mật khẩu (*)</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control bg-light border-start-0"
+                                           id="regPassword" placeholder="8-16 ký tự, gồm chữ và số" minlength="8"
+                                           maxlength="16" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="regConfirmPassword" class="form-label small fw-semibold">Mật khẩu xác
+                                    nhận (*)</label>
+                                <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0 text-muted"><i
+                                                class="bi bi-shield-lock"></i></span>
+                                    <input type="password" class="form-control bg-light border-start-0"
+                                           id="regConfirmPassword" placeholder="Nhập lại mật khẩu" required>
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="acceptTerms" required>
+                                <label class="form-check-label small text-muted" for="acceptTerms">
+                                    Tôi đồng ý với <a href="#" class="text-danger text-decoration-none">Điều khoản
+                                    dịch vụ</a>
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger w-100 py-2.5 rounded-3 fw-bold">
+                                Tạo Tài Khoản
+                            </button>
+                        </form>
+                    </div>
+
+                </div> <!-- /tab-content -->
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    // Hiển thị thông báo Alert
+    function showAlert(type, message) {
+        const container = document.getElementById('alertContainer');
+        const alertMsg = document.getElementById('alertMessage');
+        const alertText = document.getElementById('alertText');
+
+        container.classList.remove('d-none');
+        alertMsg.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show small`;
+        alertText.innerText = message;
+    }
+
+    // Ẩn thông báo Alert
+    function hideAlert() {
+        const container = document.getElementById('alertContainer');
+        container.classList.add('d-none');
+    }
+
+    // Xử lý Submit Form Đăng nhập
+    async function handleLogin(e) {
+
+        e.preventDefault();
+        hideAlert();
+
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                if (result.accessToken) {
+                    localStorage.setItem('accessToken', result.accessToken);
+                    document.cookie = `accessToken=${result.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+                }
+                if (result.refreshToken) {
+                    localStorage.setItem('refreshToken', result.refreshToken);
+                }
+                if (result.displayName) {
+                    localStorage.setItem('displayName', result.displayName);
+                }
+                if (result.roles) {
+                    localStorage.setItem('userRoles', JSON.stringify(result.roles));
+                }
+                showAlert('success', 'Đăng nhập thành công! Đang chuyển hướng...');
+                setTimeout(() => {
+                    window.location.href = "/home";
+                }, 1000);
+            } else {
+                const message = result.message || "Email hoặc mật khẩu không chính xác";
+                showAlert('error', "❌ " + message);
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối:", error);
+            showAlert('error', "❌ Không thể kết nối đến máy chủ!");
+        }
+    }
+
+    // Xử lý Submit Form Đăng ký
+    async function handleRegister(e) {
+        e.preventDefault();
+        hideAlert();
+
+        const displayName = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const phoneNumber = document.getElementById('regPhone').value.trim();
+        const password = document.getElementById('regPassword').value;
+        const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+        // 1. Kiểm tra Tên hiển thị
+        if (displayName.length < 2 || displayName.length > 30) {
+            showAlert('error', "⚠️ Tên hiển thị phải có độ dài từ 2 đến 30 ký tự!");
+            return;
+        }
+
+        // 2. Kiểm tra Số điện thoại
+        const phoneRegex = /^(0|\+84)[35789][0-9]{8}$/;
+        if (!phoneRegex.test(phoneNumber)) {
+            showAlert('error', "⚠️ Số điện thoại không hợp lệ! Vui lòng nhập số Việt Nam (ví dụ: 0912345678 hoặc +84912345678).");
+            return;
+        }
+
+        // 3. Kiểm tra Mật khẩu
+        if (password.length < 8 || password.length > 16) {
+            showAlert('error', "⚠️ Mật khẩu phải có độ dài từ 8 đến 16 ký tự!");
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).+$/;
+        if (!passwordRegex.test(password)) {
+            showAlert('error', "⚠️ Mật khẩu phải chứa cả chữ cái và chữ số (ví dụ: Pass1234)!");
+            return;
+        }
+
+        // 4. Kiểm tra Mật khẩu xác nhận
+        if (password !== confirmPassword) {
+            showAlert('error', "⚠️ Mật khẩu xác nhận không khớp với Mật khẩu đã nhập!");
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    displayName: displayName,
+                    email: email,
+                    phoneNumber: phoneNumber,
+                    password: password,
+                    confirmPassword: confirmPassword
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok || response.status === 201) {
+                showAlert('success', "🎉 Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản trước khi đăng nhập.");
+                // Reset form đăng ký
+                document.getElementById('registerForm').reset();
+                // Tự động chuyển qua tab đăng nhập sau 2.5 giây
+                setTimeout(() => {
+                    const loginTab = new bootstrap.Tab(document.getElementById('login-tab'));
+                    loginTab.show();
+                }, 2500);
+            } else {
+                const message = result.message || "Đăng ký thất bại. Vui lòng kiểm tra lại!";
+                showAlert('error', "❌ " + message);
+            }
+        } catch (error) {
+            console.error("Lỗi kết nối:", error);
+            showAlert('error', "❌ Không thể kết nối đến máy chủ!");
+        }
+    }
+
+    function fillDemo(email, password) {
+        const emailInput = document.getElementById('loginEmail');
+        const passInput = document.getElementById('loginPassword');
+        if (emailInput && passInput) {
+            emailInput.value = email;
+            passInput.value = password;
+            hideAlert();
+        }
+    }
+</script>
+</body>
+
+</html>

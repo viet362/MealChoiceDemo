@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sửa Coupon - Merchant</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+          rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/merchant.css}">
+</head>
+
+<body class="merchant-page">
+
+<div th:replace="~{merchant/layout :: shell('Sửa Coupon', 'coupons', ~{::content})}">
+
+    <section th:fragment="content" class="d-flex flex-column gap-4">
+
+        <div class="merchant-toolbar">
+            <h4 class="fw-bold mb-1">
+                <i class="bi bi-pencil-square me-2 text-danger"></i>
+                Sửa Coupon
+            </h4>
+            <p class="text-muted mb-0">
+                Cập nhật thông tin mã giảm giá.
+            </p>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <div class="merchant-panel">
+
+            <form th:action="@{/merchant/coupons/{id}(id=${couponId})}"
+                  th:object="${coupon}"
+                  method="post">
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Mã Coupon <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="text"
+                               th:field="*{couponCode}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('couponCode')} ? ' is-invalid'"
+                               maxlength="50">
+
+                        <div th:if="${#fields.hasErrors('couponCode')}"
+                             class="invalid-feedback"
+                             th:errors="*{couponCode}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Loại giảm giá <span class="text-danger">*</span>
+                        </label>
+
+                        <select th:field="*{discountType}"
+                                class="form-select"
+                                th:classappend="${#fields.hasErrors('discountType')} ? ' is-invalid'">
+
+                            <option value="">-- Chọn loại giảm giá --</option>
+
+                            <option th:each="type : ${discountTypes}"
+                                    th:value="${type}"
+                                    th:text="${type.name() == 'PERCENT'
+                                        ? 'Giảm theo phần trăm (%)'
+                                        : 'Giảm trực tiếp (VNĐ)'}">
+                            </option>
+                        </select>
+
+                        <div th:if="${#fields.hasErrors('discountType')}"
+                             class="invalid-feedback"
+                             th:errors="*{discountType}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Giá trị giảm <span class="text-danger">*</span>
+                        </label>
+
+                        <input type="number"
+                               th:field="*{discountValue}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('discountValue')} ? ' is-invalid'"
+                               min="0"
+                               step="0.01">
+
+                        <div th:if="${#fields.hasErrors('discountValue')}"
+                             class="invalid-feedback"
+                             th:errors="*{discountValue}">
+                        </div>
+
+                        <div class="form-text">
+                            Phần trăm tối đa 100%. Giảm trực tiếp nhập số tiền VNĐ.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Số lượt sử dụng
+                        </label>
+
+                        <input type="number"
+                               th:field="*{usageLimit}"
+                               class="form-control"
+                               th:classappend="${#fields.hasErrors('usageLimit')} ? ' is-invalid'"
+                               min="1"
+                               placeholder="Để trống nếu không giới hạn">
+
+                        <div th:if="${#fields.hasErrors('usageLimit')}"
+                             class="invalid-feedback"
+                             th:errors="*{usageLimit}">
+                        </div>
+
+                        <div class="form-text">
+                            Không được nhỏ hơn số lượt đã sử dụng.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Thời gian bắt đầu
+                        </label>
+
+                        <input type="datetime-local"
+                               id="startAt"
+                               name="startAt"
+                               class="form-control"
+                               th:value="${coupon.startAt != null ? #temporals.format(coupon.startAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                        <div th:if="${#fields.hasErrors('startAt')}"
+                             class="invalid-feedback"
+                             th:errors="*{startAt}">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Thời gian kết thúc
+                        </label>
+
+                        <input type="datetime-local"
+                               id="endAt"
+                               name="endAt"
+                               class="form-control"
+                               th:value="${coupon.endAt != null ? #temporals.format(coupon.endAt, 'yyyy-MM-dd''T''HH:mm') : ''}">
+                        <div th:if="${#fields.hasErrors('endAt')}"
+                             class="invalid-feedback"
+                             th:errors="*{endAt}">
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Trạng thái
+                        </label>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   role="switch"
+                                   th:field="*{isActive}">
+                            <label class="form-check-label">
+                                Coupon đang hoạt động
+                            </label>
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a th:href="@{/merchant/coupons}"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Hủy
+                    </a>
+
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Lưu thay đổi
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </section>
+</div>
+<script th:src="@{/js/coupon.js}"></script>
+</body>
+</html>

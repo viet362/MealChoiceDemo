@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Quản lý yêu cầu thanh toán</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+
+<body>
+
+<div th:replace="~{admin/layout :: shell(
+    'Quản lý yêu cầu thanh toán',
+    'payout-requests',
+    ~{::content}
+)}">
+    <section th:fragment="content">
+
+        <div class="mb-4">
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-cash-stack me-2"></i>
+                Quản lý yêu cầu thanh toán
+            </h2>
+            <p class="text-muted mb-0">
+                Xử lý yêu cầu rút tiền và thanh lý hợp đồng của Merchant.
+            </p>
+        </div>
+
+        <div th:if="${message}"
+             class="alert alert-success alert-dismissible fade show shadow-sm"
+             role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${message}"></span>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}"
+             class="alert alert-danger alert-dismissible fade show shadow-sm"
+             role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${error}"></span>
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4 rounded-4">
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+
+                    <a th:href="@{/admin/payout-requests}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus == null}
+                           ? 'btn-dark'
+                           : 'btn-outline-dark'">
+                        Tất cả
+                    </a>
+
+                    <a th:href="@{/admin/payout-requests(status='PENDING')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus != null
+                                        and selectedStatus.name() == 'PENDING'}
+                           ? 'btn-warning'
+                           : 'btn-outline-warning'">
+                        <i class="bi bi-hourglass-split me-1"></i>
+                        Chờ xử lý
+                    </a>
+
+                    <a th:href="@{/admin/payout-requests(status='COMPLETED')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus != null
+                                        and selectedStatus.name() == 'COMPLETED'}
+                           ? 'btn-success'
+                           : 'btn-outline-success'">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Hoàn tất
+                    </a>
+
+                    <a th:href="@{/admin/payout-requests(status='REJECTED')}"
+                       class="btn rounded-pill px-3"
+                       th:classappend="${selectedStatus != null
+                                        and selectedStatus.name() == 'REJECTED'}
+                           ? 'btn-danger'
+                           : 'btn-outline-danger'">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Từ chối
+                    </a>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">STT</th>
+                            <th>Merchant</th>
+                            <th>Loại yêu cầu</th>
+                            <th>Số tiền</th>
+                            <th>Ngân hàng</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày gửi</th>
+                            <th class="text-center pe-4">Thao tác</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+
+                        <tr th:each="item, stat : ${requests}">
+
+                            <td class="ps-4"
+                                th:text="${stat.count}">
+                                1
+                            </td>
+
+                            <td>
+                                <div class="fw-semibold text-dark"
+                                     th:text="${item.merchant.merchantRestaurantName}">
+                                    Nhà hàng ABC
+                                </div>
+
+                                <small class="text-muted"
+                                       th:text="${item.merchant.merchantEmail}">
+                                    merchant@email.com
+                                </small>
+                            </td>
+
+                            <td>
+
+                                <span th:if="${item.type.name() == 'WITHDRAWAL'}"
+                                      class="badge text-bg-primary">
+                                    <i class="bi bi-wallet2 me-1"></i>
+                                    Rút tiền
+                                </span>
+
+                                <span th:if="${item.type.name() == 'LIQUIDATION'}"
+                                      class="badge text-bg-danger">
+                                    <i class="bi bi-file-earmark-x me-1"></i>
+                                    Thanh lý
+                                </span>
+
+                            </td>
+
+                            <td>
+                                <span class="fw-bold text-danger"
+                                      th:text="${#numbers.formatDecimal(
+                                          item.amount,
+                                          0,
+                                          'COMMA',
+                                          0,
+                                          'POINT'
+                                      ) + ' đ'}">
+                                    50.000.000 đ
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="fw-semibold"
+                                     th:text="${item.bankName}">
+                                    MB Bank
+                                </div>
+
+                                <small class="text-muted"
+                                       th:text="${item.bankAccountNumber}">
+                                    0123456789
+                                </small>
+                            </td>
+
+                            <td>
+
+                                <span th:if="${item.status.name() == 'PENDING'}"
+                                      class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split me-1"></i>
+                                    Chờ xử lý
+                                </span>
+
+                                <span th:if="${item.status.name() == 'COMPLETED'}"
+                                      class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Hoàn tất
+                                </span>
+
+                                <span th:if="${item.status.name() == 'REJECTED'}"
+                                      class="badge bg-danger">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Từ chối
+                                </span>
+
+                            </td>
+
+                            <td>
+                                <span th:text="${#temporals.format(
+                                    item.createdAt,
+                                    'dd/MM/yyyy HH:mm'
+                                )}">
+                                    01/09/2026 14:30
+                                </span>
+                            </td>
+
+                            <td class="text-center pe-4">
+                                <a th:href="@{/admin/payout-requests/{id}(id=${item.id})}"
+                                   class="btn btn-sm btn-outline-dark"
+                                   title="Xem chi tiết">
+                                    <i class="bi bi-eye me-1"></i>
+                                    Chi tiết
+                                </a>
+                            </td>
+
+                        </tr>
+
+                        <tr th:if="${#lists.isEmpty(requests)}">
+                            <td colspan="8"
+                                class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                                Chưa có yêu cầu thanh toán nào.
+                            </td>
+                        </tr>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+</div>
+
+</body>
+</html>

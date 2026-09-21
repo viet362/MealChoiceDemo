@@ -1,0 +1,62 @@
+<!-- Fragment Danh Sách Toàn Bộ Món Ăn (Phân trang 30 món/trang) -->
+<section th:fragment="foodList" class="all-foods-section py-4 mb-5" xmlns:th="http://www.thymeleaf.org">
+    <div class="container">
+        <!-- Section Header -->
+        <div class="d-flex flex-wrap align-items-end justify-content-between mb-4 gap-2 border-bottom pb-3">
+            <div>
+                <h3 class="fw-bold text-dark mb-0">Gợi ý món ăn hôm nay</h3>
+                <p class="text-muted fs-8 mb-0 mt-1">Khám phá hàng ngàn món ăn phong phú đa dạng từ các quán ăn uy tín</p>
+            </div>
+
+            <div class="text-muted fs-8" th:if="${foodPage != null}">
+                Hiển thị <span class="fw-bold text-dark" th:text="${foodPage.numberOfElements}">30</span> /
+                <span class="fw-bold text-dark" th:text="${foodPage.totalElements}">32</span> món
+            </div>
+        </div>
+
+        <!-- Foods Grid (30 Items / Page) -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4" id="allFoodsGrid">
+            <th:block th:if="${foodPage != null and !foodPage.isEmpty()}">
+                <th:block th:each="food : ${foodPage.content}">
+                    <!-- Render từng foodCard -->
+                    <div th:replace="~{homepage/food-card-item :: foodCard(food=${food})}"></div>
+                </th:block>
+            </th:block>
+
+            <!-- Empty State -->
+            <div th:if="${foodPage == null or foodPage.isEmpty()}" class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-egg-fried fs-1 d-block mb-2 text-secondary"></i>
+                <p class="mb-0">Hiện chưa có món ăn nào trong hệ thống.</p>
+            </div>
+        </div>
+
+        <!-- Pagination Controls -->
+        <nav th:if="${foodPage != null and foodPage.totalPages > 1}" class="d-flex justify-content-center mt-5"
+             aria-label="Food pagination">
+            <ul class="pagination pagination-md shadow-sm rounded-pill overflow-hidden border-0">
+
+                <!-- Nút Previous -->
+                <li class="page-item" th:classappend="${foodPage.first} ? 'disabled'">
+                    <a class="page-link px-3" th:href="@{''(page=${foodPage.number - 1})}" aria-label="Previous">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                <!-- Danh sách số trang (Giới hạn hiển thị gọn gàng) -->
+                <th:block th:with="start=${T(java.lang.Math).max(0, foodPage.number - 2)}, end=${T(java.lang.Math).min(foodPage.totalPages - 1, foodPage.number + 2)}">
+                    <li class="page-item" th:each="pageNum : ${#numbers.sequence(start, end)}"
+                        th:classappend="${pageNum == foodPage.number} ? 'active'">
+                        <a class="page-link px-3" th:href="@{''(page=${pageNum})}" th:text="${pageNum + 1}">1</a>
+                    </li>
+                </th:block>
+
+                <!-- Nút Next -->
+                <li class="page-item" th:classappend="${foodPage.last} ? 'disabled'">
+                    <a class="page-link px-3" th:href="@{''(page=${foodPage.number + 1})}" aria-label="Next">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</section>

@@ -1,0 +1,263 @@
+<!-- Fragment Sidebar Đặt Hàng Nhanh dạng Offcanvas Drawer -->
+<div th:fragment="quickOrderSidebar" class="h-100 d-flex flex-column" xmlns:th="http://www.thymeleaf.org">
+    <!-- Offcanvas Header -->
+    <div class="offcanvas-header border-bottom border-light-subtle py-3">
+        <h5 class="offcanvas-title fw-bold text-dark d-flex align-items-center" id="quickOrderOffcanvasLabel">
+            <i class="bi bi-bag-check-fill text-danger me-2 fs-4"></i>Đặt hàng ngay
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+
+    <!-- Offcanvas Body -->
+    <div class="offcanvas-body d-flex flex-column p-4 justify-content-between h-100">
+        <div>
+            <!-- Badge số lượng ở đầu body -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-secondary fw-semibold fs-7">Đơn hàng của bạn</span>
+                <span class="badge bg-danger rounded-pill px-2.5 py-1 fs-8 fw-bold" id="cartBadgeCount">0 phần</span>
+            </div>
+
+            <!-- Danh sách món ăn đã thêm -->
+            <div class="cart-items-container mb-4 overflow-y-auto" style="max-height: 380px;" id="cartItemsList">
+                <!-- Items will be generated dynamically by JS -->
+            </div>
+        </div>
+
+        <!-- Khối giá tiền & Nút thanh toán (luôn nằm ở đáy body) -->
+        <div class="mt-auto border-top border-light-subtle pt-3">
+            <div class="fs-7 mb-3">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Tổng đơn (giá gốc)</span>
+                    <span class="fw-semibold text-dark" id="cartTotalOriginal">0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Giảm giá</span>
+                    <span class="fw-semibold text-success" id="cartDiscount">-0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2" id="serviceFeeRow">
+                    <span class="text-muted">Phí dịch vụ</span>
+                    <span class="fw-semibold text-dark" id="cartServiceFee">0 đ</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 pt-2 border-top border-dashed">
+                    <span class="text-dark fw-bold">Thanh toán</span>
+                    <span class="text-danger fw-extrabold fs-5" id="cartTotalPayment">0 đ</span>
+                </div>
+                <!-- Tiết kiệm -->
+                <div class="alert alert-success bg-success bg-opacity-10 border-0 rounded-3 p-2 mb-0 align-items-center gap-1.5 fs-8 text-success d-none" id="savingAlert">
+                    <i class="bi bi-gift-fill"></i>
+                    <span>Bạn đã tiết kiệm được <strong id="cartSavings">0 đ</strong></span>
+                </div>
+            </div>
+
+            <!-- Nút Thanh toán -->
+            <button class="btn btn-danger btn-lg w-100 rounded-pill fw-bold py-3 shadow-sm transition-hover"
+                    style="background: linear-gradient(135deg, #ff416c, #ff4b2b); border: none;"
+                    id="btnCheckout">
+                Thanh Toán
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Xử Lý Giỏ Hàng & Tính Toán (Sidebar) -->
+    <script th:inline="javascript">
+        // Trạng thái món ăn hiện tại từ model (Sidebar)
+        const sidebarFood = {
+            id: /*[[${food.id}]]*/ 0,
+            name: /*[[${food.foodName}]]*/ "",
+            price: /*[[${food.price}]]*/ 0,
+            discountPrice: /*[[${food.discountPrice != null ? food.discountPrice : food.price}]]*/ 0,
+            serviceFee: /*[[${food.serviceFee != null ? food.serviceFee : 0}]]*/ 0
+        };
+
+        // Trạng thái giỏ hàng cục bộ của Drawer
+        let drawerCart = [];
+        let drawerMode = 'view_cart'; // 'view_cart' hoặc 'buy_now'
+
+        // Cấu hình định dạng tiền tệ Việt Nam (đ)
+        function formatCurrency(val) {
+            return new Intl.NumberFormat('vi-VN').format(Math.round(val)) + ' đ';
+        }
+
+        // Khởi tạo Drawer với chế độ truyền vào
+        function initDrawer(mode) {
+            drawerMode = mode;
+            const globalCart = (typeof getGlobalCart === 'function') ? getGlobalCart() : [];
+            
+            if (mode === 'buy_now') {
+                // Chế độ Mua Ngay: Kiểm tra quán khác
+                if (globalCart.length > 0 && sidebarFood.merchantId && globalCart[0].merchantId && globalCart[0].merchantId !== sidebarFood.merchantId) {
+                    drawerCart = [];
+                } else {
+                    drawerCart = [...globalCart];
+                }
+
+                // Nếu sản phẩm hiện tại chưa có trong giỏ hàng, ta thêm tạm thời vào Drawer
+                const exists = drawerCart.find(item => item.id === sidebarFood.id);
+                if (!exists) {
+                    drawerCart.push({
+                        id: sidebarFood.id,
+                        name: sidebarFood.name,
+                        price: sidebarFood.price,
+                        discountPrice: sidebarFood.discountPrice,
+                        serviceFee: sidebarFood.serviceFee,
+                        quantity: 1,
+                        isTemporary: true // Đánh dấu là sản phẩm tạm thời, không lưu vào localStorage
+                    });
+                }
+            } else {
+                // Chế độ Xem giỏ hàng thông thường
+                drawerCart = [...globalCart];
+            }
+            
+            updateCartUI();
+        }
+
+        // Thay đổi số lượng món ăn trong giỏ hàng của Drawer
+        function changeQuantity(id, delta) {
+            const item = drawerCart.find(i => i.id === id);
+            if (item) {
+                item.quantity += delta;
+                if (item.quantity <= 0) {
+                    drawerCart = drawerCart.filter(i => i.id !== id);
+                }
+                
+                // Nếu không phải là hàng tạm thời, đồng bộ ngược lại giỏ hàng toàn cục
+                if (!item.isTemporary) {
+                    if (typeof changeQuantityGlobal === 'function') {
+                        changeQuantityGlobal(id, delta);
+                    }
+                } else {
+                    // Nếu là hàng tạm thời, chỉ cần cập nhật UI của Drawer
+                    updateCartUI();
+                }
+            }
+        }
+
+        // Cập nhật giao diện giỏ hàng của Drawer
+        function updateCartUI() {
+            const cartItemsList = document.getElementById('cartItemsList');
+            const cartBadgeCount = document.getElementById('cartBadgeCount');
+            const cartTotalOriginal = document.getElementById('cartTotalOriginal');
+            const cartDiscount = document.getElementById('cartDiscount');
+            const cartServiceFee = document.getElementById('cartServiceFee');
+            const cartTotalPayment = document.getElementById('cartTotalPayment');
+            const cartSavings = document.getElementById('cartSavings');
+            const savingAlert = document.getElementById('savingAlert');
+            const btnCheckout = document.getElementById('btnCheckout');
+
+            if (!cartItemsList) return;
+
+            // Clear list
+            cartItemsList.innerHTML = '';
+
+            let totalItems = 0;
+            let sumOriginal = 0;
+            let sumDiscount = 0;
+            let sumServiceFee = 0;
+
+            if (drawerCart.length === 0) {
+                cartItemsList.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-bag-x fs-1 text-secondary opacity-50 mb-2 d-block"></i>
+                        <p class="mb-0 fs-8">Chưa có món ăn nào trong đơn hàng</p>
+                    </div>
+                `;
+                if (btnCheckout) {
+                    btnCheckout.disabled = true;
+                    btnCheckout.classList.add('opacity-50');
+                }
+            } else {
+                if (btnCheckout) {
+                    btnCheckout.disabled = false;
+                    btnCheckout.classList.remove('opacity-50');
+                }
+
+                drawerCart.forEach(item => {
+                    totalItems += item.quantity;
+                    sumOriginal += item.price * item.quantity;
+                    sumDiscount += (item.price - item.discountPrice) * item.quantity;
+                    sumServiceFee = Math.max(sumServiceFee, item.serviceFee); // Sử dụng phí dịch vụ cao nhất
+
+                    const li = document.createElement('div');
+                    li.className = 'd-flex align-items-center justify-content-between mb-3 py-2 border-bottom border-light-subtle';
+                    li.innerHTML = `
+                        <div class="flex-grow-1 pe-2 overflow-hidden">
+                            <h6 class="fw-semibold text-dark fs-7 mb-0 text-truncate" title="${item.name}">${item.name}</h6>
+                            <span class="text-danger fw-bold fs-8">${formatCurrency(item.discountPrice)}</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center border-1"
+                                    style="width: 24px; height: 24px; font-weight: bold; line-height: 1; padding: 0;"
+                                    onclick="changeQuantity(${item.id}, -1)">
+                                -
+                            </button>
+                            <span class="fw-bold fs-7 text-dark" style="min-width: 16px; text-align: center;">${item.quantity}</span>
+                            <button class="btn btn-sm btn-outline-danger rounded-circle d-flex align-items-center justify-content-center border-1"
+                                    style="width: 24px; height: 24px; font-weight: bold; line-height: 1; padding: 0;"
+                                    onclick="changeQuantity(${item.id}, 1)">
+                                +
+                            </button>
+                        </div>
+                    `;
+                    cartItemsList.appendChild(li);
+                });
+            }
+
+            const totalPayment = sumOriginal - sumDiscount + sumServiceFee;
+
+            if (cartBadgeCount) cartBadgeCount.innerText = `${totalItems} phần`;
+            if (cartTotalOriginal) cartTotalOriginal.innerText = formatCurrency(sumOriginal);
+            if (cartDiscount) cartDiscount.innerText = `- ${formatCurrency(sumDiscount)}`;
+            if (cartServiceFee) cartServiceFee.innerText = formatCurrency(sumServiceFee);
+            if (cartTotalPayment) cartTotalPayment.innerText = formatCurrency(drawerCart.length > 0 ? totalPayment : 0);
+
+            // Sửa lỗi hiển thị alert tiết kiệm bằng cách toggle class Bootstrap d-none và d-flex
+            if (savingAlert) {
+                if (sumDiscount > 0 && drawerCart.length > 0) {
+                    if (cartSavings) cartSavings.innerText = formatCurrency(sumDiscount);
+                    savingAlert.classList.remove('d-none');
+                    savingAlert.classList.add('d-flex');
+                } else {
+                    savingAlert.classList.remove('d-flex');
+                    savingAlert.classList.add('d-none');
+                }
+            }
+        }
+
+        // Khởi tạo các sự kiện khi DOM đã load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Mặc định ban đầu xem giỏ hàng
+            initDrawer('view_cart');
+
+            // Đăng ký lắng nghe sự kiện đồng bộ từ localStorage
+            window.addEventListener('cartUpdated', () => {
+                // Nếu đang ở chế độ xem giỏ hàng thông thường thì load lại
+                if (drawerMode === 'view_cart') {
+                    initDrawer('view_cart');
+                }
+            });
+
+            const btnCheckout = document.getElementById('btnCheckout');
+            if (btnCheckout) {
+                btnCheckout.addEventListener('click', () => {
+                    if (drawerCart.length === 0) return;
+                    
+                    // Đồng bộ drawerCart vào giỏ hàng toàn cục
+                    if (typeof saveGlobalCart === 'function') {
+                        saveGlobalCart(drawerCart);
+                    }
+                    
+                    // Đóng offcanvas
+                    const offcanvasEl = document.getElementById('quickOrderOffcanvas');
+                    if (offcanvasEl) {
+                        const bsOffcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl) || new bootstrap.Offcanvas(offcanvasEl);
+                        bsOffcanvas.hide();
+                    }
+                    
+                    // Chuyển hướng sang trang thanh toán
+                    window.location.href = '/checkout';
+                });
+            }
+        });
+    </script>
+</div>

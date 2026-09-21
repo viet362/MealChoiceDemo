@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<div th:fragment="merchantBlockedModal">
+
+    <div class="modal fade"
+         id="merchantBlockedModal"
+         tabindex="-1"
+         aria-labelledby="merchantBlockedModalLabel"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered">
+
+            <div class="modal-content border-0 shadow">
+
+                <!-- HEADER -->
+                <div class="modal-header bg-danger text-white">
+
+                    <h5 class="modal-title"
+                        id="merchantBlockedModalLabel">
+
+                        <i class="bi bi-lock-fill me-2"></i>
+                        Kênh Merchant đã bị khóa
+
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            data-bs-dismiss="modal"
+                            aria-label="Close">
+                    </button>
+
+                </div>
+
+
+                <!-- BODY -->
+                <div class="modal-body p-4">
+
+                    <div class="text-center mb-3">
+
+                        <i class="bi bi-lock-fill text-danger"
+                           style="font-size: 3.5rem;">
+                        </i>
+
+                    </div>
+
+
+                    <h5 class="text-center fw-bold mb-3">
+                        Merchant của bạn hiện đang bị khóa
+                    </h5>
+
+
+                    <p class="text-muted text-center">
+
+                        Bạn tạm thời không thể truy cập
+                        các chức năng của Kênh Merchant.
+
+                    </p>
+
+
+                    <!-- LÝ DO KHÓA -->
+                    <div class="alert alert-danger mt-4">
+
+                        <div class="fw-semibold mb-2">
+
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            Lý do khóa
+
+                        </div>
+
+                        <div th:text="${merchantLockReason != null
+                                && !#strings.isEmpty(merchantLockReason)
+                                ? merchantLockReason
+                                : 'Không có thông tin lý do khóa.'}">
+
+                            Lý do khóa
+
+                        </div>
+
+                    </div>
+
+
+                    <p class="small text-muted mb-0">
+
+                        Nếu cần hỗ trợ, vui lòng liên hệ quản trị viên.
+
+                    </p>
+
+                </div>
+
+
+                <!-- FOOTER -->
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+
+                        Đóng
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+</body>
+</html>
