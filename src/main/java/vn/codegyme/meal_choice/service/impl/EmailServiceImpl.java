@@ -5,6 +5,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -24,6 +25,9 @@ public class EmailServiceImpl implements EmailService {
 
     private final JavaMailSender mailSender;
 
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
     /**
      * Lắng nghe UserRegisteredEvent và chỉ gửi mail SAU KHI transaction đăng ký
      * (AuthService#register) đã commit thành công (AFTER_COMMIT).
@@ -42,6 +46,7 @@ public class EmailServiceImpl implements EmailService {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
 
+            message.setFrom(fromEmail);
             message.setTo(email);
             message.setSubject("Đăng ký Merchant thành công");
             message.setText(
@@ -66,6 +71,7 @@ public class EmailServiceImpl implements EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "UTF-8");
 
+            helper.setFrom(fromEmail);
             helper.setTo(email);
             helper.setSubject("Kích hoạt tài khoản Trưa Nay Ăn Gì");
 
@@ -191,6 +197,7 @@ public class EmailServiceImpl implements EmailService {
             String text
     ) {
         SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromEmail);
         message.setTo(email);
         message.setSubject(subject);
         message.setText(text);
