@@ -66,20 +66,20 @@ public class AuthService {
         Role userRole = roleRepository.findByName(Role.RoleName.ROLE_USER)
                 .orElseThrow(() -> new RuntimeException("Role USER chưa được khởi tạo trong hệ thống"));
 
-        // Create a new user with hash password. Tài khoản chưa được kích hoạt
-        // (isActive = false) cho tới khi bấm link kích hoạt gửi qua email.
+        // Create a new user with hash password.
+        // Tự động kích hoạt tài khoản (isActive = true) để phục vụ chạy Demo mượt mà trên môi trường Cloud.
         User user = new User();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setPhoneNumber(registerRequest.getPhoneNumber());
         user.setDisplayName(registerRequest.getDisplayName());
         user.setRoles(new HashSet<>(Set.of(userRole)));
-        user.setIsActive(false);
+        user.setIsActive(true);
 
         // Save in database
         userRepository.save(user);
 
-        // Sinh token kích hoạt tài khoản
+        // Sinh token kích hoạt tài khoản (lưu DB để phục vụ kiểm tra/mock nếu cần)
         String rawToken = UUID.randomUUID().toString();
         ActivationToken activationToken = new ActivationToken();
         activationToken.setToken(rawToken);
@@ -87,14 +87,7 @@ public class AuthService {
         activationToken.setExpiryDate(LocalDateTime.now().plusMinutes(activationExpirationMinutes));
         activationTokenRepository.save(activationToken);
 
-        String activationLink = baseUrl + "/activate?token=" + rawToken;
-
-        // Phát sự kiện đăng ký thành công. EmailService sẽ chỉ gửi mail
-        // SAU KHI transaction này commit thành công (xem EmailService#onUserRegistered).
-        eventPublisher.publishEvent(
-                new UserRegisteredEvent(user.getEmail(), user.getDisplayName(), activationLink, activationExpirationMinutes));
-
-        return "Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản.";
+        return "Đăng ký thành công! Tài khoản đã được kích hoạt, bạn có thể đăng nhập ngay.";
     }
 
     @Transactional
@@ -131,8 +124,10 @@ public class AuthService {
             throw new RuntimeException("Email hoặc mật khẩu không đúng");
         }
 
+        // Tự động kích hoạt nếu tài khoản tạo trước đó chưa được kích hoạt
         if (!Boolean.TRUE.equals(user.getIsActive())) {
-            throw new RuntimeException("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt tài khoản.");
+            user.setIsActive(true);
+            userRepository.save(user);
         }
 
         return buildAuthResponse(user);

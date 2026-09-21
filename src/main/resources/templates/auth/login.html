@@ -385,14 +385,22 @@
             const result = await response.json();
 
             if (response.ok || response.status === 201) {
-                showAlert('success', "🎉 Đăng ký thành công! Vui lòng kiểm tra email để kích hoạt tài khoản trước khi đăng nhập.");
+                const successMsg = (result && result.message) ? result.message : "🎉 Đăng ký thành công! Tài khoản đã được kích hoạt, bạn có thể đăng nhập ngay.";
+                showAlert('success', successMsg);
+                // Điền sẵn email vừa đăng ký vào ô đăng nhập
+                const loginEmailInput = document.getElementById('loginEmail');
+                if (loginEmailInput) {
+                    loginEmailInput.value = email;
+                }
                 // Reset form đăng ký
                 document.getElementById('registerForm').reset();
-                // Tự động chuyển qua tab đăng nhập sau 2.5 giây
+                // Tự động chuyển qua tab đăng nhập sau 1.5 giây
                 setTimeout(() => {
                     const loginTab = new bootstrap.Tab(document.getElementById('login-tab'));
                     loginTab.show();
-                }, 2500);
+                    const loginPass = document.getElementById('loginPassword');
+                    if (loginPass) loginPass.focus();
+                }, 1500);
             } else {
                 const message = result.message || "Đăng ký thất bại. Vui lòng kiểm tra lại!";
                 showAlert('error', "❌ " + message);
